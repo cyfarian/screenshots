@@ -56,6 +56,9 @@ public struct GameConfig: Codable, Hashable, Sendable {
     public var doubleSkunkThreshold: Int
     public var mugginsEnabled: Bool
     public var startingDealerSeat: Int
+    /// Optional custom peg colors per track, as "#rrggbb" strings chosen at
+    /// game setup. Presentation-only; absent in games saved by older builds.
+    public var trackColors: [String]?
 
     public init(
         mode: GameMode,
@@ -65,7 +68,8 @@ public struct GameConfig: Codable, Hashable, Sendable {
         skunkThreshold: Int = 91,
         doubleSkunkThreshold: Int = 61,
         mugginsEnabled: Bool = false,
-        startingDealerSeat: Int = 0
+        startingDealerSeat: Int = 0,
+        trackColors: [String]? = nil
     ) {
         self.mode = mode
         self.playerNames = playerNames
@@ -75,6 +79,7 @@ public struct GameConfig: Codable, Hashable, Sendable {
         self.doubleSkunkThreshold = doubleSkunkThreshold
         self.mugginsEnabled = mugginsEnabled
         self.startingDealerSeat = startingDealerSeat
+        self.trackColors = trackColors
     }
 
     /// Display name for a track (player name, or team name in partners play).

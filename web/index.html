@@ -44,6 +44,7 @@
           <label class="field"><span>Team 1</span><input id="ng-team-0" placeholder="Optional"></label>
           <label class="field"><span>Team 2</span><input id="ng-team-1" placeholder="Optional"></label>
         </div>
+        <div id="ng-colors"></div>
         <label class="field">
           <span>First dealer</span>
           <select id="ng-dealer" aria-label="First dealer"></select>
@@ -87,14 +88,14 @@
         <div id="quick-grid" hidden></div>
         <div id="custom-row" hidden>
           <button id="custom-minus" class="stepper" aria-label="Decrease points">−</button>
-          <button id="custom-peg" class="primary" disabled>Peg</button>
+          <button id="custom-peg" class="primary" disabled>Score</button>
           <button id="custom-plus" class="stepper" aria-label="Increase points">+</button>
         </div>
         <!-- Numbers style: big +1…+5 build up a pending total -->
         <div id="numbers-row" hidden></div>
         <div id="pending-row" hidden>
           <button id="pending-clear" class="stepper" aria-label="Clear pending points"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H9.5L3.5 12l6 7H21a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 21 5z"/><line x1="17" y1="9.5" x2="12" y2="14.5"/><line x1="12" y1="9.5" x2="17" y2="14.5"/></svg></button>
-          <button id="pending-peg" class="primary" disabled>Peg</button>
+          <button id="pending-peg" class="primary" disabled>Score</button>
         </div>
         <div id="action-row">
           <button id="btn-undo"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Undo</button>
@@ -154,7 +155,15 @@
     <div class="card">
       <div class="card-title">Appearance</div>
       <label class="field">
-        <span>Peg colors</span>
+        <span>Theme</span>
+        <select id="set-theme">
+          <option value="system">Match device</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Default peg colors</span>
         <select id="set-palette">
           <option value="classic">Classic (red / blue)</option>
           <option value="colorblind">Color-blind friendly</option>

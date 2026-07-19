@@ -93,18 +93,47 @@ final class AppState {
 
     // MARK: - Scoring actions
 
-    func peg(track: Int, points: Int, reason: PegReason, breakdown: ScoreBreakdown? = nil) {
-        guard var current = session else { return }
+    @discardableResult
+    func peg(
+        track: Int, points: Int, reason: PegReason,
+        breakdown: ScoreBreakdown? = nil, quiet: Bool = false
+    ) -> Bool {
+        guard var current = session else { return false }
         do {
             try current.game.peg(track: track, points: points, reason: reason, breakdown: breakdown)
             session = current
             persist()
-            let name = current.game.config.trackName(track)
-            toast = ToastMessage(text: "+\(points) \(reason.label) — \(name)")
-            announce("\(name) pegs \(points) for \(reason.label), now \(current.game.score(ofTrack: track))")
+            if !quiet {
+                let name = current.game.config.trackName(track)
+                toast = ToastMessage(text: "+\(points) \(reason.label) — \(name)")
+                announce("\(name) pegs \(points) for \(reason.label), now \(current.game.score(ofTrack: track))")
+            }
+            return true
         } catch {
             // Game already over — the victory panel is showing.
+            return false
         }
+    }
+
+    /// Commits a queued set of scores as separate, itemized events with one
+    /// combined toast/announcement.
+    func commit(parts: [(points: Int, reason: PegReason)], manualTotal: Int, track: Int) {
+        guard let game = session?.game, !game.isOver else { return }
+        let partsSum = parts.reduce(0) { $0 + $1.points }
+        let before = game.score(ofTrack: track)
+        if partsSum == manualTotal && !parts.isEmpty {
+            for part in parts {
+                if !peg(track: track, points: part.points, reason: part.reason, quiet: true) {
+                    break
+                }
+            }
+        } else if manualTotal > 0 {
+            peg(track: track, points: manualTotal, reason: .manual, quiet: true)
+        }
+        guard let after = session?.game.score(ofTrack: track), after > before else { return }
+        let name = session?.game.config.trackName(track) ?? ""
+        toast = ToastMessage(text: "+\(after - before) — \(name)")
+        announce("\(name) scores \(after - before), now \(after)")
     }
 
     func completeHand() {

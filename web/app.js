@@ -3,7 +3,7 @@ import * as E from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const TROPHY = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5a1.8 1.8 0 0 0 .3 3.6L7 9M17 5h2.5a1.8 1.8 0 0 1-.3 3.6L17 9"/></svg>';
-const VERSION = "1.4.0";
+const VERSION = "1.5.0";
 const SCHEMA_VERSION = 1;
 
 // ------------------------------------------------------------------- Storage
@@ -47,6 +47,7 @@ let settings = store.load("settings", {
   muggins: false, skunkx: false, palette: "classic", hintSeen: false,
   scoreStyle: "numbers", // "numbers" (big +1..+5 build-up) | "named" (combo buttons)
   boardZoom: false,
+  theme: "system", // "system" | "light" | "dark"
 });
 if (!settings.scoreStyle) settings.scoreStyle = "numbers";
 
@@ -70,8 +71,18 @@ function applyPalette() {
   const colors = PALETTES[settings.palette] ?? PALETTES.classic;
   colors.forEach((c, i) => document.documentElement.style.setProperty(`--track${i}`, c));
 }
-function trackColor(t) {
+
+/** Track color: the game's custom picks win, then the default palette. */
+function trackColor(t, config = session?.game?.config) {
+  const custom = config?.trackColors?.[t];
+  if (custom && /^#[0-9a-fA-F]{6}$/.test(custom)) return custom;
   return (PALETTES[settings.palette] ?? PALETTES.classic)[t % 3];
+}
+
+function applyTheme() {
+  const theme = settings.theme ?? "system";
+  if (theme === "system") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
 }
 
 // ------------------------------------------------------------------- Tabs
@@ -209,6 +220,25 @@ function syncNewGameForm() {
     namesBox.appendChild(label);
   }
   $("ng-teams").hidden = mode !== "fourPlayerPartners";
+
+  // One color wheel per track (players, or teams in partners play).
+  const trackCount = E.MODES[mode].trackCount;
+  const colorsBox = $("ng-colors");
+  while (colorsBox.children.length > trackCount) colorsBox.lastChild.remove();
+  while (colorsBox.children.length < trackCount) {
+    const i = colorsBox.children.length;
+    const defaultColor = (PALETTES[settings.palette] ?? PALETTES.classic)[i % 3];
+    const label = document.createElement("label");
+    label.className = "field";
+    label.innerHTML = `<span id="ng-color-label-${i}"></span>
+      <input type="color" id="ng-color-${i}" value="${defaultColor}" aria-label="Peg color">`;
+    colorsBox.appendChild(label);
+  }
+  for (let i = 0; i < trackCount; i++) {
+    $("ng-color-label-" + i).textContent =
+      (mode === "fourPlayerPartners" ? `Team ${i + 1}` : playerNameInput(i)) + " peg color";
+  }
+
   const dealer = $("ng-dealer");
   const prev = Number(dealer.value || 0);
   dealer.innerHTML = "";
@@ -244,8 +274,10 @@ $("ng-start").addEventListener("click", () => {
     mode === "fourPlayerPartners"
       ? [$("ng-team-0").value.trim(), $("ng-team-1").value.trim()]
       : [];
+  const trackColors = [...Array(E.MODES[mode].trackCount).keys()]
+    .map((i) => $("ng-color-" + i).value);
   const game = E.newGame({
-    mode, playerNames, teamNames,
+    mode, playerNames, teamNames, trackColors,
     mugginsEnabled: $("ng-muggins").checked,
     startingDealerSeat: Number($("ng-dealer").value),
   });
@@ -254,7 +286,7 @@ $("ng-start").addEventListener("click", () => {
     : null;
   session = { game, match };
   selectedTrack = 0;
-  pending = 0;
+  clearPending();
   animState = null;
   persistSession();
   renderGameTab();
@@ -275,6 +307,12 @@ const QUICK = [
   { label: "Heels", pts: 2, reason: "heels" },
 ];
 let pending = 0;
+let pendingParts = []; // named combos queued for the next Score commit
+
+function clearPending() {
+  pending = 0;
+  pendingParts = [];
+}
 
 function renderLiveGame() {
   const g = session.game;
@@ -302,7 +340,7 @@ function renderLiveGame() {
       <div class="name" style="color:${selected ? "#fff" : "var(--text)"}">${esc(E.trackName(g.config, t))}${t === crib ? " · crib" : ""}</div>
       <div class="pts" style="color:${inkColor}">${E.trackScore(g, t)}</div>`;
     el.addEventListener("click", () => {
-      if (selectedTrack !== t) pending = 0; // pending points belong to a player
+      if (selectedTrack !== t) clearPending(); // pending points belong to a player
       selectedTrack = t;
       renderLiveGame();
     });
@@ -355,9 +393,13 @@ function renderPegPad(g) {
     for (const q of QUICK) {
       const b = document.createElement("button");
       b.innerHTML = `<span class="q-label">${q.label}</span><span class="q-pts">+${q.pts}</span>`;
-      b.setAttribute("aria-label", `${q.label}, ${q.pts} point${q.pts > 1 ? "s" : ""}`);
+      b.setAttribute("aria-label", `Add ${q.label}, ${q.pts} point${q.pts > 1 ? "s" : ""}`);
       b.style.background = trackColor(selectedTrack);
-      b.addEventListener("click", () => doPeg(selectedTrack, q.pts, q.reason));
+      b.addEventListener("click", () => {
+        pending = Math.min(29, pending + q.pts);
+        pendingParts.push(q);
+        syncPendingButtons();
+      });
       grid.appendChild(b);
     }
   }
@@ -367,7 +409,7 @@ function renderPegPad(g) {
 
 function syncPendingButtons() {
   for (const btn of [$("custom-peg"), $("pending-peg")]) {
-    btn.textContent = pending > 0 ? `Peg +${pending}` : "Peg";
+    btn.textContent = pending > 0 ? `Score +${pending}` : "Score";
     btn.disabled = pending === 0;
     btn.style.background = pending > 0 ? trackColor(selectedTrack) : "";
     btn.style.borderColor = trackColor(selectedTrack);
@@ -430,18 +472,20 @@ function concludeGame(startNext) {
   }
 }
 
-function doPeg(track, points, reason, breakdown = null) {
+function doPeg(track, points, reason, breakdown = null, { quiet = false } = {}) {
   try {
     const before = E.trackScore(session.game, track);
     E.peg(session.game, track, points, reason, breakdown);
     persistSession();
-    if (navigator.vibrate) navigator.vibrate(8);
-    startPegAnimation(track, before, E.trackScore(session.game, track));
-    const name = E.trackName(session.game.config, track);
-    const label = E.REASON_LABEL[reason] ?? reason;
-    showToast(`+${points} ${label} — ${name}`);
-    announce(`${name} pegs ${points} for ${label}, now ${E.trackScore(session.game, track)}`);
-    renderLiveGame();
+    if (!quiet) {
+      if (navigator.vibrate) navigator.vibrate(8);
+      startPegAnimation(track, before, E.trackScore(session.game, track));
+      const name = E.trackName(session.game.config, track);
+      const label = E.REASON_LABEL[reason] ?? reason;
+      showToast(`+${points} ${label} — ${name}`);
+      announce(`${name} pegs ${points} for ${label}, now ${E.trackScore(session.game, track)}`);
+      renderLiveGame();
+    }
     return true;
   } catch {
     return false; // game already over
@@ -457,15 +501,35 @@ $("custom-plus").addEventListener("click", () => {
   syncPendingButtons();
 });
 function commitPending() {
-  if (pending > 0 && doPeg(selectedTrack, pending, "manual")) {
-    pending = 0; // counter zeroes out after the peg advances
-    syncPendingButtons();
+  if (pending === 0) return;
+  const track = selectedTrack;
+  const partsSum = pendingParts.reduce((sum, q) => sum + q.pts, 0);
+  const before = E.trackScore(session.game, track);
+  let committed = false;
+  if (partsSum === pending && pendingParts.length > 0) {
+    // Itemized commit: each combo lands in the log under its own name.
+    for (const q of pendingParts) {
+      if (!doPeg(track, q.pts, q.reason, null, { quiet: true })) break;
+      committed = true;
+    }
+  } else {
+    committed = doPeg(track, pending, "manual", null, { quiet: true });
+  }
+  if (committed) {
+    const total = E.trackScore(session.game, track) - before;
+    const name = E.trackName(session.game.config, track);
+    if (navigator.vibrate) navigator.vibrate(8);
+    startPegAnimation(track, before, E.trackScore(session.game, track));
+    showToast(`+${total} — ${name}`);
+    announce(`${name} scores ${total}, now ${E.trackScore(session.game, track)}`);
+    clearPending(); // the counter zeroes out after the pegs advance
+    renderLiveGame();
   }
 }
 $("custom-peg").addEventListener("click", commitPending);
 $("pending-peg").addEventListener("click", commitPending);
 $("pending-clear").addEventListener("click", () => {
-  pending = 0;
+  clearPending();
   syncPendingButtons();
 });
 $("btn-undo").addEventListener("click", () => {
@@ -810,16 +874,16 @@ function renderCalcPeg(breakdown, isCrib) {
   const reason = isCrib ? "cribCount" : "handCount";
   const claimed = claimedPoints ?? breakdown.total;
 
-  let html = `<div class="card-title">Peg it</div><div id="calc-track-chips">`;
+  let html = `<div class="card-title">Score it</div><div id="calc-track-chips">`;
   for (let t = 0; t < tc; t++) {
     const sel = t === track;
     html += `<button class="track-chip" data-chip="${t}" aria-pressed="${sel}"
-      style="border-color:${sel ? trackColor(t) : "var(--line)"};color:${trackColor(t)}">
+      style="border-color:${sel ? trackColor(t, g.config) : "var(--line)"};color:${trackColor(t, g.config)}">
       ${esc(E.trackName(g.config, t))}</button>`;
   }
   html += `</div>
     <button id="peg-full" class="primary" ${breakdown.total === 0 ? "disabled" : ""}>
-      Peg ${breakdown.total} for ${esc(name)}</button>`;
+      Score ${breakdown.total} for ${esc(name)}</button>`;
 
   if (g.config.mugginsEnabled && breakdown.total > 0) {
     html += `<div id="claimed-row">
@@ -830,7 +894,7 @@ function renderCalcPeg(breakdown, isCrib) {
     if (claimed < breakdown.total) {
       const missed = breakdown.total - claimed;
       if (claimed > 0) {
-        html += `<button id="peg-claimed">Peg claimed ${claimed} for ${esc(name)}</button>`;
+        html += `<button id="peg-claimed">Score claimed ${claimed} for ${esc(name)}</button>`;
       }
       for (let other = 0; other < tc; other++) {
         if (other === track) continue;
@@ -990,6 +1054,7 @@ function renderAllGames() {
 // ---------------------------------------------------------------- Settings
 
 function renderSettings() {
+  $("set-theme").value = settings.theme ?? "system";
   $("set-style").value = settings.scoreStyle;
   $("set-muggins").checked = settings.muggins;
   $("set-skunkx").checked = settings.skunkx;
@@ -1006,9 +1071,14 @@ $("set-skunkx").addEventListener("change", (e) => {
   persistSettings();
   $("ng-skunkx").checked = settings.skunkx;
 });
+$("set-theme").addEventListener("change", (e) => {
+  settings.theme = e.target.value;
+  persistSettings();
+  applyTheme();
+});
 $("set-style").addEventListener("change", (e) => {
   settings.scoreStyle = e.target.value;
-  pending = 0;
+  clearPending();
   persistSettings();
 });
 $("set-palette").addEventListener("change", (e) => {
@@ -1028,6 +1098,7 @@ function esc(s) {
 // ------------------------------------------------------------------- Boot
 
 applyPalette();
+applyTheme();
 $("ng-muggins").checked = settings.muggins;
 $("ng-skunkx").checked = settings.skunkx;
 syncNewGameForm();

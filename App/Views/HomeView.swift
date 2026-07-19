@@ -35,6 +35,9 @@ struct NewGameForm: View {
     @State private var bestOf = 3
     @State private var skunksCountExtra = false
     @State private var appliedDefaults = false
+    @State private var pegColors: [Color] = [
+        TrackStyle.color(0), TrackStyle.color(1), TrackStyle.color(2),
+    ]
 
     var body: some View {
         Form {
@@ -51,6 +54,15 @@ struct NewGameForm: View {
                 if mode == .fourPlayerPartners {
                     TextField("Team 1 name (optional)", text: $teamNames[0])
                     TextField("Team 2 name (optional)", text: $teamNames[1])
+                }
+                ForEach(0..<mode.trackCount, id: \.self) { track in
+                    ColorPicker(
+                        mode == .fourPlayerPartners
+                            ? "Team \(track + 1) peg color"
+                            : "\(resolvedName(seat: track)) peg color",
+                        selection: $pegColors[track],
+                        supportsOpacity: false
+                    )
                 }
             }
 
@@ -115,7 +127,8 @@ struct NewGameForm: View {
             playerNames: names,
             teamNames: mode == .fourPlayerPartners ? teams : [],
             mugginsEnabled: mugginsEnabled,
-            startingDealerSeat: dealerSeat
+            startingDealerSeat: dealerSeat,
+            trackColors: (0..<mode.trackCount).map { pegColors[$0].hexString }
         )
         let matchConfig = playMatch
             ? MatchConfig(bestOf: bestOf, skunksCountExtra: skunksCountExtra)

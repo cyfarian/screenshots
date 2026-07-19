@@ -11,6 +11,14 @@ struct PegPadView: View {
     @AppStorage("scoreStyle") private var scoreStyle = "numbers"
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @State private var pending = 0
+    @State private var pendingParts: [QuickScore] = []
+
+    private var config: GameConfig? { app.session?.game.config }
+
+    private func clearPending() {
+        pending = 0
+        pendingParts = []
+    }
 
     private struct QuickScore: Identifiable {
         let label: String
@@ -42,10 +50,10 @@ struct PegPadView: View {
             actionRow
         }
         .onChange(of: app.selectedTrack) {
-            pending = 0 // pending points belong to a player
+            clearPending() // pending points belong to a player
         }
         .onChange(of: scoreStyle) {
-            pending = 0
+            clearPending()
         }
     }
 
@@ -63,7 +71,7 @@ struct PegPadView: View {
                             .frame(maxWidth: .infinity, minHeight: 56)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(TrackStyle.color(app.selectedTrack))
+                    .tint(TrackStyle.color(app.selectedTrack, config: config))
                     .accessibilityLabel("Add \(n) points")
                 }
             }
@@ -91,7 +99,8 @@ struct PegPadView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
                 ForEach(quickScores) { quick in
                     Button {
-                        peg(points: quick.points, reason: quick.reason)
+                        pending = min(29, pending + quick.points)
+                        pendingParts.append(quick)
                     } label: {
                         VStack(spacing: 0) {
                             Text(quick.label)
@@ -105,8 +114,8 @@ struct PegPadView: View {
                         .frame(maxWidth: .infinity, minHeight: 46)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(TrackStyle.color(app.selectedTrack))
-                    .accessibilityLabel("\(quick.label), \(quick.points) points")
+                    .tint(TrackStyle.color(app.selectedTrack, config: config))
+                    .accessibilityLabel("Add \(quick.label), \(quick.points) points")
                 }
             }
             HStack(spacing: 6) {
@@ -126,15 +135,20 @@ struct PegPadView: View {
     private func commitButton(minHeight: CGFloat) -> some View {
         Button {
             guard pending > 0 else { return }
-            peg(points: pending, reason: .manual)
-            pending = 0 // the counter zeroes out after the peg advances
+            app.commit(
+                parts: pendingParts.map { ($0.points, $0.reason) },
+                manualTotal: pending,
+                track: app.selectedTrack
+            )
+            clearPending() // the counter zeroes out after the pegs advance
+            haptic(.medium)
         } label: {
-            Text(pending > 0 ? "Peg +\(pending)" : "Peg")
+            Text(pending > 0 ? "Score +\(pending)" : "Score")
                 .font(.headline)
                 .frame(maxWidth: .infinity, minHeight: minHeight)
         }
         .buttonStyle(.borderedProminent)
-        .tint(TrackStyle.color(app.selectedTrack))
+        .tint(TrackStyle.color(app.selectedTrack, config: config))
         .disabled(pending == 0)
     }
 

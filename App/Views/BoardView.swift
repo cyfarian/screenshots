@@ -1,5 +1,29 @@
 import SwiftUI
+import UIKit
 import CribbageEngine
+
+extension Color {
+    init?(hexString: String) {
+        var hex = hexString.trimmingCharacters(in: .whitespaces)
+        guard hex.hasPrefix("#"), hex.count == 7 else { return nil }
+        hex.removeFirst()
+        guard let value = UInt32(hex, radix: 16) else { return nil }
+        self.init(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
+    }
+
+    var hexString: String {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return String(
+            format: "#%02x%02x%02x",
+            Int(round(red * 255)), Int(round(green * 255)), Int(round(blue * 255))
+        )
+    }
+}
 
 enum TrackStyle {
     static let palettes: [String: [Color]] = [
@@ -17,7 +41,12 @@ enum TrackStyle {
         ],
     ]
 
-    static func color(_ track: Int) -> Color {
+    /// The game's custom picks win, then the default palette from Settings.
+    static func color(_ track: Int, config: GameConfig? = nil) -> Color {
+        if let custom = config?.trackColors, track < custom.count,
+           let color = Color(hexString: custom[track]) {
+            return color
+        }
         let name = UserDefaults.standard.string(forKey: "palette") ?? "classic"
         let colors = palettes[name] ?? palettes["classic"]!
         return colors[track % colors.count]
@@ -60,10 +89,6 @@ struct BoardView: View {
             }
         }
         .aspectRatio(layout.aspectRatio, contentMode: .fit)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
         .onChange(of: frontPegs) { old, new in
             for track in 0..<min(old.count, new.count) where old[track] != new[track] {
                 animation = PegAnimation(track: track, from: old[track], to: new[track], start: Date())
@@ -152,7 +177,7 @@ struct BoardView: View {
             }
             context.stroke(
                 path,
-                with: .color(TrackStyle.color(track).opacity(0.34)),
+                with: .color(TrackStyle.color(track, config: game.config).opacity(0.34)),
                 style: StrokeStyle(
                     lineWidth: 0.95 * layout.laneGap * scale,
                     lineCap: .round, lineJoin: .round
@@ -270,7 +295,7 @@ struct BoardView: View {
             context.draw(
                 Text(verbatim: initial)
                     .font(.system(size: max(8, 0.55 * scale), weight: .heavy))
-                    .foregroundStyle(TrackStyle.color(track)),
+                    .foregroundStyle(TrackStyle.color(track, config: game.config)),
                 at: point((p0.x, p0.y + 0.62))
             )
         }
@@ -282,7 +307,7 @@ struct BoardView: View {
         now: Date
     ) {
         for track in 0..<layout.trackCount {
-            let color = TrackStyle.color(track)
+            let color = TrackStyle.color(track, config: game.config)
             let pegs = game.pegPositions(ofTrack: track)
             let front = frontDistance(track: track, now: now)
             let backCenter = point(layout.position(hole: pegs.back, track: track))

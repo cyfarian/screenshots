@@ -89,16 +89,25 @@ console.log("named grid after choice:", await page.locator("#quick-grid").isVisi
   "| on game tab:", await page.locator("#view-game").isVisible());
 await foldCheck("named");
 await page.screenshot({ path: "shot-named.png" });
-await page.click("#quick-grid button:nth-child(1)"); // 15 for Jess
-console.log("toast:", (await page.locator("#toast-text").textContent()).trim());
-await page.click("#toast-undo");
+// Named combos queue onto the Score button, then commit itemized
+await page.click("#quick-grid button:nth-child(1)"); // 15 (+2)
+await page.click("#quick-grid button:nth-child(2)"); // Pair (+2)
+console.log("named pending:", (await page.locator("#custom-peg").textContent()).trim()); // Score +4
+await page.click("#custom-peg");
+console.log("toast:", (await page.locator("#toast-text").textContent()).trim()); // +4 — Jess
+console.log("jess after named commit:",
+  (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim()); // 4
+await page.click("#toast-undo"); // removes the last part (Pair)
+console.log("jess after undo:",
+  (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim()); // 2
 
 // History tab: This game / All games toggle
-await page.click("#numbers-row, #quick-grid button:nth-child(2)").catch(() => {});
 await page.click("[data-tab='history']");
 console.log("history default (live game) = current:",
   await page.locator("#history-current").isVisible());
 console.log("event rows:", await page.locator("#events-list li").count());
+console.log("itemized combo in log:",
+  (await page.locator("#events-list").textContent()).includes("Fifteen"));
 await page.click("#hist-all-btn");
 console.log("all-games view:", await page.locator("#history-all").isVisible(),
   "| finished:", (await page.locator("#games-list li").textContent()).includes("No finished"));
@@ -156,14 +165,27 @@ await page.click("[data-tab='settings']");
 console.log("settings X visible:", await page.locator("#nav-close").isVisible());
 await page.selectOption("#set-style", "named");
 await page.selectOption("#set-palette", "colorblind");
+await page.selectOption("#set-theme", "dark");
+console.log("dark theme applied:", await page.evaluate(() => document.documentElement.dataset.theme));
 await page.click("#nav-close");
 console.log("settings X -> game:", await page.locator("#view-game").isVisible());
 await page.goto(BASE, { waitUntil: "networkidle" });
 const track0 = await page.evaluate(() =>
   getComputedStyle(document.documentElement).getPropertyValue("--track0").trim());
 console.log("palette after reload:", track0);
+console.log("theme after reload:", await page.evaluate(() => document.documentElement.dataset.theme));
 await page.fill("#ng-name-0", "A");
+// Pick a custom color for player 1 via the color-wheel input
+await page.evaluate(() => {
+  const input = document.querySelector("#ng-color-0");
+  input.value = "#8e24aa";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+});
 await page.click("#ng-start");
+await page.waitForSelector("#game-live:not([hidden])");
+const customColor = await page.evaluate(() =>
+  document.querySelector("#quick-grid button")?.style.background);
+console.log("custom player color on buttons:", customColor); // rgb(142, 36, 170)
 await page.waitForSelector("#game-live:not([hidden])");
 console.log("style from settings (named):", await page.locator("#quick-grid").isVisible());
 

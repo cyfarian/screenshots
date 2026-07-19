@@ -109,17 +109,17 @@ struct GameView: View {
                     .foregroundStyle(selected ? Color.white : Color.primary)
                 Text("\(game.score(ofTrack: track))")
                     .font(.title2.bold().monospacedDigit())
-                    .foregroundStyle(selected ? Color.white : TrackStyle.color(track))
+                    .foregroundStyle(selected ? Color.white : TrackStyle.color(track, config: game.config))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(selected ? TrackStyle.color(track) : Color(.secondarySystemGroupedBackground))
+                    .fill(selected ? TrackStyle.color(track, config: game.config) : Color(.secondarySystemGroupedBackground))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(TrackStyle.color(track), lineWidth: 2)
+                    .stroke(TrackStyle.color(track, config: game.config), lineWidth: 2)
             )
         }
         .buttonStyle(.plain)

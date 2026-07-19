@@ -51,7 +51,7 @@ struct HistoryView: View {
                 ForEach(game.events.reversed()) { event in
                     HStack {
                         Circle()
-                            .fill(TrackStyle.color(event.trackIndex))
+                            .fill(TrackStyle.color(event.trackIndex, config: game.config))
                             .frame(width: 10, height: 10)
                         Text(game.config.trackName(event.trackIndex))
                         Text(event.reason.label)

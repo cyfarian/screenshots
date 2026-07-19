@@ -20,6 +20,7 @@ struct CribbageApp: App {
 struct RootTabView: View {
     @Environment(AppState.self) private var app
     @AppStorage("scoreStyle") private var scoreStyle = "numbers"
+    @AppStorage("theme") private var theme = "system"
     @State private var showingCountChooser = false
 
     var body: some View {
@@ -75,5 +76,8 @@ struct RootTabView: View {
         } message: {
             Text(app.lastError ?? "")
         }
+        .preferredColorScheme(
+            theme == "light" ? .light : theme == "dark" ? .dark : nil
+        )
     }
 }

@@ -117,7 +117,7 @@ struct HandCalculatorView: View {
         let trackCount = game.config.mode.trackCount
         let track = min(app.selectedTrack, trackCount - 1)
         let trackName = game.config.trackName(track)
-        Section("Peg it") {
+        Section("Score it") {
             // Who pegs: same selection as the game screen's score cards.
             HStack(spacing: 6) {
                 ForEach(0..<trackCount, id: \.self) { t in
@@ -130,7 +130,7 @@ struct HandCalculatorView: View {
                             .frame(maxWidth: .infinity, minHeight: 30)
                     }
                     .buttonStyle(.bordered)
-                    .tint(TrackStyle.color(t))
+                    .tint(TrackStyle.color(t, config: game.config))
                     .opacity(t == track ? 1 : 0.45)
                     .accessibilityAddTraits(t == track ? .isSelected : [])
                 }
@@ -143,7 +143,7 @@ struct HandCalculatorView: View {
                     finishPeg()
                 }
             } label: {
-                Label("Peg \(breakdown.total) for \(trackName)", systemImage: "checkmark.circle.fill")
+                Label("Score \(breakdown.total) for \(trackName)", systemImage: "checkmark.circle.fill")
                     .font(.headline)
             }
             .disabled(breakdown.total == 0 || pegBusy)

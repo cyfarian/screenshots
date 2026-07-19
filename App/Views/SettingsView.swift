@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) private var app
     @AppStorage("scoreStyle") private var scoreStyle = "numbers"
+    @AppStorage("theme") private var theme = "system"
     @AppStorage("palette") private var palette = "classic"
     @AppStorage("defaultMuggins") private var defaultMuggins = false
     @AppStorage("defaultSkunksCountExtra") private var defaultSkunksCountExtra = false
@@ -17,7 +18,12 @@ struct SettingsView: View {
                 }
             }
             Section("Appearance") {
-                Picker("Peg colors", selection: $palette) {
+                Picker("Theme", selection: $theme) {
+                    Text("Match device").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                Picker("Default peg colors", selection: $palette) {
                     Text("Classic (red / blue)").tag("classic")
                     Text("Color-blind friendly").tag("colorblind")
                     Text("Violet / teal").tag("modern")
