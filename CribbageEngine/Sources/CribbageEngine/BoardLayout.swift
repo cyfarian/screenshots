@@ -82,9 +82,20 @@ public struct BoardLayout: Sendable {
         return centerPoint(atDistance: Double(hole))
     }
 
+    /// Centerline position at a fractional distance — used for the group
+    /// separator ticks drawn BETWEEN holes (e.g. between holes 5 and 6).
+    public func centerPosition(atDistance distance: Double) -> (x: Double, y: Double) {
+        centerPoint(atDistance: min(max(distance, 0), Double(targetScore)))
+    }
+
     /// Unit vector perpendicular to the path at a hole (for tick marks).
     public func perpendicular(atHole hole: Int) -> (x: Double, y: Double) {
         normalVector(atDistance: Double(hole))
+    }
+
+    /// Perpendicular at a fractional distance, matching `centerPosition(atDistance:)`.
+    public func perpendicular(atDistance distance: Double) -> (x: Double, y: Double) {
+        normalVector(atDistance: min(max(distance, 0), Double(targetScore)))
     }
 
     /// Dense polyline along one lane, for drawing the track ribbon.

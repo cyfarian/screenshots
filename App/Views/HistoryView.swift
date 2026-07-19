@@ -132,7 +132,7 @@ struct HistoryView: View {
 
         return VStack(alignment: .leading, spacing: 3) {
             HStack {
-                Text("🏆 \(game.config.trackName(winner))")
+                Label(game.config.trackName(winner), systemImage: "trophy")
                     .font(.headline)
                 if let skunkNote {
                     Text(skunkNote)

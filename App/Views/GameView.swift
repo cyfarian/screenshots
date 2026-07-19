@@ -215,8 +215,11 @@ struct GameOverPanel: View {
 
         return AnyView(
             VStack(spacing: 10) {
-                Text("🏆 \(name) wins \(game.score(ofTrack: winner))–\(loserScores(game, winner: winner))")
-                    .font(.title3.bold())
+                Label(
+                    "\(name) wins \(game.score(ofTrack: winner))–\(loserScores(game, winner: winner))",
+                    systemImage: "trophy"
+                )
+                .font(.title3.bold())
                 ForEach(skunks, id: \.self) { line in
                     Text(line).font(.subheadline).foregroundStyle(.orange)
                 }

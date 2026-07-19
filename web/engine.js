@@ -390,8 +390,8 @@ export function boardLayout(trackCount, legs = 6, targetScore = 121) {
     maxLaneOffset: maxE, size,
     aspectRatio: size.width / size.height,
     position: (hole, track) => lane(hole, track),
-    centerPosition: (hole) => center(hole),
-    perpendicular: (hole) => normal(hole),
+    centerPosition: (d) => center(d),
+    perpendicular: (d) => normal(d),
     lanePoints(track, samplesPerUnit = 4) {
       const count = targetScore * samplesPerUnit;
       const points = [];

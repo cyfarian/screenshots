@@ -2,7 +2,8 @@
 import * as E from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
-const VERSION = "1.3.0";
+const TROPHY = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5a1.8 1.8 0 0 0 .3 3.6L7 9M17 5h2.5a1.8 1.8 0 0 1-.3 3.6L17 9"/></svg>';
+const VERSION = "1.4.0";
 const SCHEMA_VERSION = 1;
 
 // ------------------------------------------------------------------- Storage
@@ -27,7 +28,7 @@ const store = {
     try {
       localStorage.setItem("cribbage." + key, JSON.stringify({ v: SCHEMA_VERSION, data: value }));
     } catch (err) {
-      showToast("⚠️ Couldn't save — storage full?", false);
+      showToast("Couldn't save — storage full?", false);
     }
   },
   remove(key) {
@@ -393,7 +394,7 @@ function renderGameOver(g, tc) {
 
   const box = $("game-over");
   box.innerHTML = `
-    <div class="headline">🏆 ${esc(name)} wins ${scoreline}</div>
+    <div class="headline">${TROPHY} ${esc(name)} wins ${scoreline}</div>
     ${skunkLines.map((l) => `<div class="skunkline">${esc(l)}</div>`).join("")}
     <div class="buttons">
       <button id="go-undo">↩︎ Undo last peg</button>
@@ -594,30 +595,33 @@ function drawBoard(g) {
     ctx.globalAlpha = 1;
   }
 
-  // Ticks + labels
+  // Group separators BETWEEN every block of five holes, plus bold milestone
+  // numbers in full text color.
   const skunkHoles = new Set([g.config.skunkThreshold - 1, g.config.doubleSkunkThreshold - 1]);
-  ctx.strokeStyle = mutedColor;
-  ctx.fillStyle = mutedColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  for (let hole = 5; hole < layout.targetScore; hole += 5) {
+  ctx.strokeStyle = textColor;
+  ctx.lineWidth = Math.max(1.5, 0.085 * scale);
+  ctx.globalAlpha = 0.55;
+  for (let group = 5; group < layout.targetScore; group += 5) {
+    const d = group + 0.5; // midway between hole `group` and the next block
+    const c = layout.centerPosition(d);
+    const n = layout.perpendicular(d);
+    const r = halfWidth + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(...P({ x: c.x + r * n.x, y: c.y + r * n.y }));
+    ctx.lineTo(...P({ x: c.x - r * n.x, y: c.y - r * n.y }));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = textColor;
+  for (let hole = 10; hole < layout.targetScore; hole += 10) {
+    if (skunkHoles.has(hole)) continue;
     const c = layout.centerPosition(hole);
     const n = layout.perpendicular(hole);
-    if (!skunkHoles.has(hole)) {
-      const r = halfWidth + 0.55;
-      ctx.globalAlpha = 0.8;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(...P({ x: c.x + r * n.x, y: c.y + r * n.y }));
-      ctx.lineTo(...P({ x: c.x - r * n.x, y: c.y - r * n.y }));
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    if (hole % 10 === 0 && !skunkHoles.has(hole)) {
-      const r = halfWidth + 1.05;
-      ctx.font = `600 ${Math.max(8, 0.58 * scale)}px -apple-system, sans-serif`;
-      ctx.fillText(String(hole), ...P({ x: c.x + r * n.x, y: c.y + r * n.y }));
-    }
+    const r = halfWidth + 1.12;
+    ctx.font = `800 ${Math.max(9, 0.72 * scale)}px -apple-system, sans-serif`;
+    ctx.fillText(String(hole), ...P({ x: c.x + r * n.x, y: c.y + r * n.y }));
   }
 
   // Holes
@@ -665,15 +669,17 @@ function drawBoard(g) {
     ctx.fillText(E.trackName(g.config, t).charAt(0).toUpperCase(), ...P({ x: p0.x, y: p0.y + 0.62 }));
   }
 
-  // Pegs (front peg position may be mid-animation)
+  // Pegs (front peg position may be mid-animation). In the zoomed view the
+  // front peg grows enough to print the score right on it.
   let animating = false;
+  const zoomed = !!settings.boardZoom;
   for (let t = 0; t < tc; t++) {
     const pegs = E.pegPositions(g, t);
     const front = animatedFront(g, t);
     if (front !== pegs.front) animating = true;
     for (const [pos, isFront] of [[pegs.back, false], [front, true]]) {
       const [x, y] = P(layout.position(pos, t));
-      const rad = (isFront ? 0.42 : 0.32) * layout.laneGap * scale;
+      const rad = (isFront ? (zoomed ? 0.55 : 0.42) : 0.32) * layout.laneGap * scale;
       ctx.beginPath();
       ctx.arc(x, y, rad, 0, Math.PI * 2);
       ctx.fillStyle = trackColor(t);
@@ -681,6 +687,13 @@ function drawBoard(g) {
       ctx.strokeStyle = "rgba(255,255,255,0.9)";
       ctx.lineWidth = Math.max(1, 0.06 * scale);
       ctx.stroke();
+      if (isFront && zoomed) {
+        ctx.fillStyle = "#fff";
+        ctx.font = `800 ${0.42 * scale}px -apple-system, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(E.trackScore(g, t)), x, y);
+      }
     }
   }
   if (animating) scheduleBoardDraw(g);
@@ -959,7 +972,7 @@ function renderAllGames() {
     });
     const li = document.createElement("li");
     li.innerHTML = `
-      <div class="g-head">🏆 ${esc(E.trackName(g.config, winner))}
+      <div class="g-head">${TROPHY} ${esc(E.trackName(g.config, winner))}
         ${skunk ? `<span class="skunk-pill">${skunk === "doubleSkunk" ? "double skunk" : "skunk"}</span>` : ""}
         <span class="g-date">${when}</span></div>
       <div class="g-scores">${esc(scores)}</div>`;

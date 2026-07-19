@@ -170,28 +170,34 @@ struct BoardView: View {
         ]
         let halfWidth = Double(layout.trackCount - 1) * layout.laneGap / 2
 
-        for hole in stride(from: 5, to: layout.targetScore, by: 5) {
+        // Separators BETWEEN every block of five holes.
+        for group in stride(from: 5, to: layout.targetScore, by: 5) {
+            let boundary = Double(group) + 0.5
+            let center = layout.centerPosition(atDistance: boundary)
+            let normal = layout.perpendicular(atDistance: boundary)
+            let reach = halfWidth + 0.5
+            var tick = Path()
+            tick.move(to: point((center.x + reach * normal.x, center.y + reach * normal.y)))
+            tick.addLine(to: point((center.x - reach * normal.x, center.y - reach * normal.y)))
+            context.stroke(
+                tick,
+                with: .color(.primary.opacity(0.55)),
+                lineWidth: max(1.5, 0.085 * scale)
+            )
+        }
+
+        // Bold milestone numbers in full text color.
+        for hole in stride(from: 10, to: layout.targetScore, by: 10) where !skunkHoles.contains(hole) {
             let center = layout.centerPosition(hole: hole)
             let normal = layout.perpendicular(atHole: hole)
-
-            if !skunkHoles.contains(hole) {
-                let reach = halfWidth + 0.55
-                var tick = Path()
-                tick.move(to: point((center.x + reach * normal.x, center.y + reach * normal.y)))
-                tick.addLine(to: point((center.x - reach * normal.x, center.y - reach * normal.y)))
-                context.stroke(tick, with: .color(.secondary.opacity(0.8)), lineWidth: 1)
-            }
-
-            if hole % 10 == 0 && !skunkHoles.contains(hole) {
-                let reach = halfWidth + 1.05
-                let at = point((center.x + reach * normal.x, center.y + reach * normal.y))
-                context.draw(
-                    Text(verbatim: "\(hole)")
-                        .font(.system(size: max(8, 0.58 * scale), weight: .semibold))
-                        .foregroundStyle(.secondary),
-                    at: at
-                )
-            }
+            let reach = halfWidth + 1.12
+            let at = point((center.x + reach * normal.x, center.y + reach * normal.y))
+            context.draw(
+                Text(verbatim: "\(hole)")
+                    .font(.system(size: max(9, 0.72 * scale), weight: .heavy))
+                    .foregroundStyle(.primary),
+                at: at
+            )
         }
     }
 
@@ -282,7 +288,8 @@ struct BoardView: View {
             let backCenter = point(layout.position(hole: pegs.back, track: track))
             let frontCenter = point(layout.position(atDistance: front, track: track))
             for (center, isFront) in [(backCenter, false), (frontCenter, true)] {
-                let radius = (isFront ? 0.42 : 0.32) * layout.laneGap * scale
+                // The zoomed front peg grows enough to print the score on it.
+                let radius = (isFront ? (boardZoom ? 0.55 : 0.42) : 0.32) * layout.laneGap * scale
                 let rect = CGRect(
                     x: center.x - radius, y: center.y - radius,
                     width: radius * 2, height: radius * 2
@@ -293,6 +300,14 @@ struct BoardView: View {
                     with: .color(.white.opacity(0.9)),
                     lineWidth: max(1, 0.06 * scale)
                 )
+                if isFront && boardZoom {
+                    context.draw(
+                        Text(verbatim: "\(game.score(ofTrack: track))")
+                            .font(.system(size: 0.42 * scale, weight: .heavy))
+                            .foregroundStyle(.white),
+                        at: center
+                    )
+                }
             }
         }
     }
