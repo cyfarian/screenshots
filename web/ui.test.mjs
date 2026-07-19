@@ -47,61 +47,70 @@ const foldCheck = async (label) => {
 await page.goto(BASE, { waitUntil: "networkidle" });
 console.log("tabs:", await page.locator("#tabbar .tab").count());
 
+// With NO game: Count tab goes straight to the calculator, X returns to game
+await page.click("[data-tab='calc']");
+console.log("no-game count -> calc:", await page.locator("#view-calc").isVisible(),
+  "| chooser:", await page.locator("#count-modal").isVisible());
+await page.click("#nav-close");
+console.log("X back to game tab:", await page.locator("#view-game").isVisible());
+
 // Start a 2p muggins game
 await page.fill("#ng-name-0", "Cy");
 await page.fill("#ng-name-1", "Jess");
 await page.check("#ng-muggins");
 await page.click("#ng-start");
 await page.waitForSelector("#game-live:not([hidden])");
-console.log("hint shown:", await page.locator("#hint-overlay").isVisible());
 await page.click("#hint-done");
 
-// Default scoring style is big numbers
+// Numbers style default: build/commit/zero
 console.log("numbers row visible:", await page.locator("#numbers-row").isVisible());
-console.log("named grid hidden:", await page.locator("#quick-grid").isHidden());
 await foldCheck("numbers");
-await page.screenshot({ path: "shot-numbers.png" });
-
-// +5 +3 build up, commit pegs 8 and zeroes
 await page.click("#numbers-row .num-btn:nth-child(5)");
 await page.click("#numbers-row .num-btn:nth-child(3)");
 console.log("pending label:", (await page.locator("#pending-peg").textContent()).trim()); // Peg +8
 await page.click("#pending-peg");
 console.log("after commit:",
   (await page.locator(".score-card").nth(0).locator(".pts").textContent()).trim(),
-  "| label:", (await page.locator("#pending-peg").textContent()).trim(),
-  "| disabled:", await page.locator("#pending-peg").isDisabled());
+  "| zeroed:", await page.locator("#pending-peg").isDisabled());
 
-// Pending resets when switching player
+// Pending resets on player switch; clear works
 await page.click("#numbers-row .num-btn:nth-child(4)");
 await page.locator(".score-card").nth(1).click();
-console.log("pending after player switch disabled:", await page.locator("#pending-peg").isDisabled());
-
-// Clear button
+console.log("pending reset on switch:", await page.locator("#pending-peg").isDisabled());
 await page.click("#numbers-row .num-btn:nth-child(2)");
 await page.click("#pending-clear");
-console.log("after clear disabled:", await page.locator("#pending-peg").isDisabled());
+console.log("clear works:", await page.locator("#pending-peg").isDisabled());
 
-// Toggle to named style in-game; instant peg + toast undo still work
-await page.click("#btn-style");
-console.log("named grid visible:", await page.locator("#quick-grid").isVisible());
+// Count chooser during a game: named combos option
+await page.click("[data-tab='calc']");
+console.log("chooser shown:", await page.locator("#count-modal").isVisible());
+await page.click("#count-named");
+console.log("named grid after choice:", await page.locator("#quick-grid").isVisible(),
+  "| on game tab:", await page.locator("#view-game").isVisible());
 await foldCheck("named");
 await page.screenshot({ path: "shot-named.png" });
 await page.click("#quick-grid button:nth-child(1)"); // 15 for Jess
 console.log("toast:", (await page.locator("#toast-text").textContent()).trim());
 await page.click("#toast-undo");
-console.log("jess after toast undo:",
-  (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim());
 
-// Style persists across reload
-await page.goto(BASE, { waitUntil: "networkidle" });
-await page.waitForSelector("#game-live:not([hidden])");
-console.log("named persists after reload:", await page.locator("#quick-grid").isVisible());
-await page.click("#btn-style"); // back to numbers
+// History tab: This game / All games toggle
+await page.click("#numbers-row, #quick-grid button:nth-child(2)").catch(() => {});
+await page.click("[data-tab='history']");
+console.log("history default (live game) = current:",
+  await page.locator("#history-current").isVisible());
+console.log("event rows:", await page.locator("#events-list li").count());
+await page.click("#hist-all-btn");
+console.log("all-games view:", await page.locator("#history-all").isVisible(),
+  "| finished:", (await page.locator("#games-list li").textContent()).includes("No finished"));
+await page.click("#hist-current-btn");
+console.log("back to current:", await page.locator("#history-current").isVisible());
 
-// Calculator: 29 hand pegged to Jess, muggins split 25/4
-await page.click("#btn-count");
+// Count chooser -> log the cards -> calculator, muggins flow, returns to game
+await page.click("[data-tab='game']");
+await page.click("[data-tab='calc']");
+await page.click("#count-cards");
 await page.waitForSelector("#view-calc:not([hidden])");
+console.log("calc title:", (await page.locator("#title").textContent()).trim());
 for (const [r, s] of [[5, "hearts"], [5, "diamonds"], [5, "spades"], [11, "clubs"], [5, "clubs"]]) {
   await page.click(`#card-grid button[data-rank="${r}"][data-suit="${s}"]`);
 }
@@ -114,14 +123,17 @@ console.log("after muggins:",
   (await page.locator(".score-card").nth(0).locator(".pts").textContent()).trim(),
   (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim());
 
-// Events modal
-await page.click("#btn-events");
-console.log("event rows:", await page.locator("#events-list li").count());
-await page.click("#events-close");
+// Board zoom toggle
+await page.click("#btn-zoom");
+console.log("zoom on:", await page.locator("#btn-zoom").getAttribute("aria-pressed"));
 await page.waitForTimeout(600);
-await page.screenshot({ path: "shot-numbers-mid.png" });
+await page.screenshot({ path: "shot-zoomed.png" });
+await page.click("#btn-zoom");
+console.log("zoom off:", await page.locator("#btn-zoom").getAttribute("aria-pressed"));
 
-// Win via repeated numbers commits for Jess
+// Chooser numbers option puts numbers pad back; win the game with it
+await page.click("[data-tab='calc']");
+await page.click("#count-numbers");
 await page.locator(".score-card").nth(1).click();
 for (let round = 0; round < 6 && !(await page.locator("#game-over").isVisible()); round++) {
   for (let i = 0; i < 5; i++) await page.click("#numbers-row .num-btn:nth-child(5)"); // +25
@@ -130,13 +142,22 @@ for (let round = 0; round < 6 && !(await page.locator("#game-over").isVisible())
 console.log("game over:", await page.locator("#game-over").isVisible());
 await page.click("#go-next");
 await page.waitForSelector("#game-setup:not([hidden])");
-await page.click("[data-tab='history']");
-console.log("history entries:", await page.locator("#games-list li").count());
 
-// Settings: scoring style picker + palette both persist
+// History after finishing: This game empty, All games has the archive
+await page.click("[data-tab='history']");
+await page.click("#hist-current-btn");
+console.log("no-game current history:",
+  (await page.locator("#events-list li").first().textContent()).trim());
+await page.click("#hist-all-btn");
+console.log("finished games:", await page.locator("#games-list li").count());
+
+// Settings: X back to game; style/palette persistence
 await page.click("[data-tab='settings']");
+console.log("settings X visible:", await page.locator("#nav-close").isVisible());
 await page.selectOption("#set-style", "named");
 await page.selectOption("#set-palette", "colorblind");
+await page.click("#nav-close");
+console.log("settings X -> game:", await page.locator("#view-game").isVisible());
 await page.goto(BASE, { waitUntil: "networkidle" });
 const track0 = await page.evaluate(() =>
   getComputedStyle(document.documentElement).getPropertyValue("--track0").trim());
@@ -145,7 +166,6 @@ await page.fill("#ng-name-0", "A");
 await page.click("#ng-start");
 await page.waitForSelector("#game-live:not([hidden])");
 console.log("style from settings (named):", await page.locator("#quick-grid").isVisible());
-console.log("hint on later game:", await page.locator("#hint-overlay").isVisible());
 
 // Abandon flow
 await page.click("#btn-newgame");

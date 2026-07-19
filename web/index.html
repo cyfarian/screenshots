@@ -17,7 +17,11 @@
 </head>
 <body>
 <header id="topbar">
+  <span class="topbar-side"></span>
   <h1 id="title">Cribbage</h1>
+  <span class="topbar-side">
+    <button id="nav-close" class="icon-btn" aria-label="Back to game" hidden>✕</button>
+  </span>
 </header>
 
 <main>
@@ -68,13 +72,12 @@
       <div id="game-meta">
         <span id="meta-text" class="muted"></span>
         <span id="meta-actions">
-          <button id="btn-style" class="icon-btn" aria-label="Switch scoring buttons">🔢</button>
-          <button id="btn-events" class="icon-btn" aria-label="Event history">📜</button>
           <button id="btn-newgame" class="icon-btn" aria-label="End or restart game">✕</button>
         </span>
       </div>
       <div id="board-wrap">
         <canvas id="board" role="img"></canvas>
+        <button id="btn-zoom" aria-label="Zoom board" aria-pressed="false">🔍</button>
       </div>
 
       <div id="game-over" class="card" hidden></div>
@@ -117,10 +120,22 @@
 
   <!-- ========================================================= History -->
   <section id="view-history" hidden>
-    <div id="stats-cards"></div>
-    <div class="card">
-      <div class="card-title">Finished games</div>
-      <ul id="games-list"></ul>
+    <div id="history-toggle" role="tablist" aria-label="History scope">
+      <button id="hist-current-btn" role="tab">This game</button>
+      <button id="hist-all-btn" role="tab">All games</button>
+    </div>
+    <div id="history-current" hidden>
+      <div class="card">
+        <div class="card-title">This game's pegging</div>
+        <ul id="events-list"></ul>
+      </div>
+    </div>
+    <div id="history-all" hidden>
+      <div id="stats-cards"></div>
+      <div class="card">
+        <div class="card-title">Finished games</div>
+        <ul id="games-list"></ul>
+      </div>
     </div>
   </section>
 
@@ -164,7 +179,7 @@
 
 <nav id="tabbar" aria-label="Sections">
   <button data-tab="game" class="tab active" aria-label="Game"><span>🎯</span>Game</button>
-  <button data-tab="calc" class="tab" aria-label="Hand calculator"><span>🃏</span>Cards</button>
+  <button data-tab="calc" class="tab" aria-label="Count a hand"><span>🃏</span>Count</button>
   <button data-tab="history" class="tab" aria-label="History and stats"><span>📊</span>History</button>
   <button data-tab="settings" class="tab" aria-label="Settings"><span>⚙️</span>Settings</button>
 </nav>
@@ -174,13 +189,13 @@
   <button id="toast-undo">Undo</button>
 </div>
 
-<div id="events-modal" class="modal" hidden>
+<div id="count-modal" class="modal" hidden>
   <div class="modal-card">
-    <div class="modal-head">
-      <span class="card-title">Events</span>
-      <button id="events-close" class="ghost">Done</button>
-    </div>
-    <ul id="events-list"></ul>
+    <div class="card-title">How do you want to count?</div>
+    <button id="count-numbers" class="count-option">🔢 Big numbers<span>+1 … +5 buttons</span></button>
+    <button id="count-named" class="count-option">🏷️ Named combos<span>15, Pair, Run…</span></button>
+    <button id="count-cards" class="count-option">🃏 Log the cards<span>Pick the hand, we count it</span></button>
+    <button id="count-cancel" class="ghost">Cancel</button>
   </div>
 </div>
 

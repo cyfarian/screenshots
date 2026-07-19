@@ -28,6 +28,8 @@ enum TrackStyle {
 /// track when points are scored.
 struct BoardView: View {
     let game: Game
+    /// Track the zoomed view follows (the game screen passes the selection).
+    var focusTrack: Int = 0
 
     /// In-flight front-peg animation for one track.
     private struct PegAnimation: Equatable {
@@ -38,7 +40,9 @@ struct BoardView: View {
     }
 
     private static let animationDuration: TimeInterval = 0.45
+    private static let zoomFactor: Double = 2.6
 
+    @AppStorage("boardZoom") private var boardZoom = false
     @State private var animation: PegAnimation?
 
     private var layout: BoardLayout {
@@ -64,6 +68,18 @@ struct BoardView: View {
             for track in 0..<min(old.count, new.count) where old[track] != new[track] {
                 animation = PegAnimation(track: track, from: old[track], to: new[track], start: Date())
             }
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                boardZoom.toggle()
+            } label: {
+                Image(systemName: boardZoom ? "minus.magnifyingglass" : "plus.magnifyingglass")
+                    .padding(7)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(boardZoom ? .green : Color(.darkGray))
+            .padding(6)
+            .accessibilityLabel(boardZoom ? "Show full board" : "Zoom board")
         }
         .accessibilityLabel(Text(boardSummary))
     }
@@ -94,9 +110,23 @@ struct BoardView: View {
 
     private func draw(context: GraphicsContext, size: CGSize, now: Date) {
         let board = layout.boardSize
-        let scale = min(size.width / board.width, size.height / board.height)
-        let offsetX = (size.width - board.width * scale) / 2
-        let offsetY = (size.height - board.height * scale) / 2
+        let fitScale = min(size.width / board.width, size.height / board.height)
+        var scale = fitScale
+        var offsetX = (size.width - board.width * scale) / 2
+        var offsetY = (size.height - board.height * scale) / 2
+        if boardZoom {
+            // Zoomed window centered on the selected player's front peg,
+            // clamped to the board edges. Follows the peg mid-animation.
+            scale = fitScale * Self.zoomFactor
+            let track = min(max(focusTrack, 0), layout.trackCount - 1)
+            let focus = layout.position(atDistance: frontDistance(track: track, now: now), track: track)
+            let windowW = size.width / scale
+            let windowH = size.height / scale
+            let cx = min(max(focus.x, windowW / 2), board.width - windowW / 2)
+            let cy = min(max(focus.y, windowH / 2), board.height - windowH / 2)
+            offsetX = size.width / 2 - cx * scale
+            offsetY = size.height / 2 - cy * scale
+        }
         let point: ((x: Double, y: Double)) -> CGPoint = { p in
             CGPoint(x: offsetX + p.x * scale, y: offsetY + p.y * scale)
         }

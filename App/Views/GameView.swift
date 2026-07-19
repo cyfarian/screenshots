@@ -7,8 +7,6 @@ import CribbageEngine
 struct GameView: View {
     @Environment(AppState.self) private var app
     @AppStorage("scoringHintSeen") private var scoringHintSeen = false
-    @AppStorage("scoreStyle") private var scoreStyle = "numbers"
-    @State private var showingHistory = false
     @State private var showingAbandonConfirm = false
 
     var body: some View {
@@ -25,16 +23,13 @@ struct GameView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Event history") { showingHistory = true }
-                    Button("Abandon game", role: .destructive) { showingAbandonConfirm = true }
+                Button {
+                    showingAbandonConfirm = true
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(systemName: "xmark")
                 }
+                .accessibilityLabel("End or restart game")
             }
-        }
-        .sheet(isPresented: $showingHistory) {
-            EventHistorySheet()
         }
         .confirmationDialog(
             "Abandon this game? It won't be saved.",
@@ -65,7 +60,7 @@ struct GameView: View {
         let game = session.game
         VStack(spacing: 8) {
             scoreHeader(game: game, match: session.match)
-            BoardView(game: game)
+            BoardView(game: game, focusTrack: app.selectedTrack)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             if game.isOver {
                 GameOverPanel()
@@ -92,19 +87,9 @@ struct GameView: View {
             HStack {
                 Text("\(game.config.playerNames[game.dealerSeat]) deals")
                 if let match {
-                    Text("· " + matchSummary(match, trackCount: game.config.mode.trackCount))
+                    Spacer()
+                    Text(matchSummary(match, trackCount: game.config.mode.trackCount))
                 }
-                Spacer()
-                Button {
-                    scoreStyle = scoreStyle == "numbers" ? "named" : "numbers"
-                } label: {
-                    Image(systemName: scoreStyle == "numbers" ? "tag" : "number")
-                }
-                .accessibilityLabel(
-                    scoreStyle == "numbers"
-                        ? "Switch to named scoring buttons"
-                        : "Switch to number scoring buttons"
-                )
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -256,48 +241,5 @@ struct GameOverPanel: View {
             .filter { $0 != winner }
             .map { "\(game.score(ofTrack: $0))" }
             .joined(separator: "–")
-    }
-}
-
-/// Reverse-chronological list of every peg event, with undo.
-struct EventHistorySheet: View {
-    @Environment(AppState.self) private var app
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            List {
-                if let game = app.session?.game {
-                    ForEach(game.events.reversed()) { event in
-                        HStack {
-                            Circle()
-                                .fill(TrackStyle.color(event.trackIndex))
-                                .frame(width: 10, height: 10)
-                            Text(game.config.trackName(event.trackIndex))
-                            Text(event.reason.label)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            if event.points > 0 {
-                                Text("+\(event.points)")
-                                    .monospacedDigit()
-                                    .bold()
-                            }
-                        }
-                        .font(.subheadline)
-                    }
-                }
-            }
-            .navigationTitle("Events")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Undo last") { app.undo() }
-                        .disabled(!(app.session?.game.canUndo ?? false))
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
     }
 }

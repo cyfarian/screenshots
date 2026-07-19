@@ -49,11 +49,14 @@ body {
 
 #topbar {
   flex: none;
+  display: flex;
+  align-items: center;
   padding: calc(6px + env(safe-area-inset-top)) 12px 6px;
   border-bottom: 1px solid var(--line);
-  text-align: center;
 }
-#topbar h1 { font-size: 16px; margin: 0; }
+#topbar h1 { font-size: 16px; margin: 0; flex: 1; text-align: center; }
+.topbar-side { min-width: 34px; display: flex; justify-content: flex-end; }
+#nav-close { font-size: 18px; font-weight: 700; }
 
 main {
   flex: 1;
@@ -160,7 +163,14 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 #game-meta { flex: none; display: flex; align-items: center; font-size: 13px; }
 #meta-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-#board-wrap { flex: 1; min-height: 90px; display: flex; align-items: center; justify-content: center; }
+#board-wrap { flex: 1; min-height: 90px; display: flex; align-items: center; justify-content: center; position: relative; }
+#btn-zoom {
+  position: absolute; top: 6px; right: 6px;
+  background: var(--btn-fill); color: var(--btn-fill-text);
+  border: none; border-radius: 10px; font-size: 15px; padding: 6px 9px;
+  opacity: 0.85;
+}
+#btn-zoom[aria-pressed="true"] { background: var(--accent); opacity: 1; }
 #board { border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
 
 #peg-pad { flex: none; display: flex; flex-direction: column; gap: 6px; }
@@ -176,10 +186,10 @@ button:disabled { opacity: 0.4; pointer-events: none; }
   font-variant-numeric: tabular-nums;
 }
 #pending-row { display: flex; gap: 6px; }
-#pending-row .stepper { width: 62px; font-size: 20px; font-weight: 700; }
+#pending-row .stepper { width: 84px; font-size: 20px; font-weight: 700; }
 #pending-row .primary { flex: 1; width: auto; min-height: 52px; font-size: 19px; }
 #custom-row { display: flex; gap: 6px; }
-#custom-row .stepper { width: 52px; font-size: 20px; font-weight: 700; padding: 8px 0; }
+#custom-row .stepper { width: 84px; font-size: 22px; font-weight: 700; padding: 8px 0; }
 #custom-row .stepper, #pending-row .stepper {
   background: var(--btn-fill); color: var(--btn-fill-text); border: none;
 }
@@ -235,6 +245,12 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 #events-list .dot { width: 9px; height: 9px; border-radius: 5px; flex-shrink: 0; }
 #events-list .pts { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+.count-option {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  font-size: 16px; font-weight: 700; padding: 12px 14px; text-align: left;
+}
+.count-option span { font-size: 12px; font-weight: 400; color: var(--muted); }
+
 /* ------------------------------------------------------------ Calculator */
 #calc-slots { display: flex; gap: 6px; margin-bottom: 10px; }
 .slot {
@@ -272,6 +288,24 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 #claimed-row .claimed-val { flex: 1; text-align: center; font-weight: 700; }
 
 /* --------------------------------------------------------------- History */
+#history-toggle {
+  display: flex; gap: 0; margin-bottom: 12px;
+  border: 1px solid var(--line); border-radius: 11px; overflow: hidden;
+}
+#history-toggle button {
+  flex: 1; border: none; border-radius: 0; padding: 10px 0;
+  font-size: 14px; font-weight: 700; background: var(--card); color: var(--muted);
+}
+#history-toggle button.active { background: var(--accent); color: #fff; }
+#history-current .card { margin-bottom: 12px; }
+#events-list { list-style: none; margin: 0; padding: 0; }
+#events-list li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px;
+}
+#events-list li:last-child { border-bottom: none; }
+#events-list .dot { width: 9px; height: 9px; border-radius: 5px; flex-shrink: 0; }
+#events-list .pts { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-card .stat-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
 .stat-card .stat-row .v { color: var(--muted); font-variant-numeric: tabular-nums; }
 #games-list { list-style: none; margin: 0; padding: 0; }

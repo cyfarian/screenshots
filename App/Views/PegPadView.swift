@@ -172,7 +172,7 @@ struct PegPadView: View {
     private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .frame(width: 44, height: 36)
+                .frame(width: 76, height: 36)
         }
         .buttonStyle(.borderedProminent)
         .tint(Color(.darkGray))

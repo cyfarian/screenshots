@@ -50,8 +50,18 @@ struct HandCalculatorView: View {
                 }
             }
         }
-        .navigationTitle("Hand Calculator")
+        .navigationTitle("Count")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    app.selectedTab = .game
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .accessibilityLabel("Back to game")
+            }
+        }
         .onChange(of: selection) {
             claimedPoints = nil
         }

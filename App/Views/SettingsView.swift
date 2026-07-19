@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(AppState.self) private var app
     @AppStorage("scoreStyle") private var scoreStyle = "numbers"
     @AppStorage("palette") private var palette = "classic"
     @AppStorage("defaultMuggins") private var defaultMuggins = false
@@ -37,6 +38,16 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    app.selectedTab = .game
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .accessibilityLabel("Back to game")
+            }
+        }
     }
 }
 

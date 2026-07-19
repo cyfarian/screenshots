@@ -1,39 +1,118 @@
 import SwiftUI
 import CribbageEngine
 
+/// Both histories in one place: the live game's pegging log, and the archive
+/// of finished games with per-player stats.
 struct HistoryView: View {
     @Environment(AppState.self) private var app
+    @State private var scope: Scope = .thisGame
+    @State private var appliedDefaultScope = false
+
+    enum Scope: Hashable {
+        case thisGame, allGames
+    }
 
     var body: some View {
         List {
-            if !app.stats.isEmpty {
-                Section {
-                    NavigationLink {
-                        StatsView()
-                    } label: {
-                        Label("Player Stats", systemImage: "chart.bar.fill")
+            Section {
+                Picker("History scope", selection: $scope) {
+                    Text("This game").tag(Scope.thisGame)
+                    Text("All games").tag(Scope.allGames)
+                }
+                .pickerStyle(.segmented)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
+            if scope == .thisGame {
+                thisGameSection
+            } else {
+                allGamesSections
+            }
+        }
+        .navigationTitle("History")
+        .onAppear {
+            if !appliedDefaultScope {
+                scope = app.hasLiveGame ? .thisGame : .allGames
+                appliedDefaultScope = true
+            }
+        }
+    }
+
+    // MARK: - This game
+
+    @ViewBuilder
+    private var thisGameSection: some View {
+        Section("This game's pegging") {
+            if let game = app.session?.game {
+                if game.events.isEmpty {
+                    Text("Nothing pegged yet.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(game.events.reversed()) { event in
+                    HStack {
+                        Circle()
+                            .fill(TrackStyle.color(event.trackIndex))
+                            .frame(width: 10, height: 10)
+                        Text(game.config.trackName(event.trackIndex))
+                        Text(event.reason.label)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if event.points > 0 {
+                            Text("+\(event.points)")
+                                .monospacedDigit()
+                                .bold()
+                        }
                     }
+                    .font(.subheadline)
+                }
+            } else {
+                Text("No game in progress.")
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - All games
+
+    @ViewBuilder
+    private var allGamesSections: some View {
+        ForEach(app.stats) { player in
+            Section(player.name) {
+                statRow("Record", "\(player.wins)–\(player.losses)")
+                statRow("Skunks given / taken", "\(player.skunksGiven) / \(player.skunksTaken)")
+                if player.handsCounted > 0 {
+                    statRow("Average hand", String(format: "%.1f", player.averageHand))
+                    statRow("Best hand", "\(player.bestHand)")
                 }
             }
-            Section("Finished games") {
-                if app.finishedGames.isEmpty {
-                    Text("No finished games yet.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(app.finishedGames) { game in
-                        gameRow(game)
-                    }
-                    .onDelete { offsets in
-                        // Resolve ids first: each delete reloads the array.
-                        let ids = offsets.map { app.finishedGames[$0].id }
-                        for id in ids {
-                            app.deleteFinishedGame(id: id)
-                        }
+        }
+        Section("Finished games") {
+            if app.finishedGames.isEmpty {
+                Text("No finished games yet.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(app.finishedGames) { game in
+                    gameRow(game)
+                }
+                .onDelete { offsets in
+                    // Resolve ids first: each delete reloads the array.
+                    let ids = offsets.map { app.finishedGames[$0].id }
+                    for id in ids {
+                        app.deleteFinishedGame(id: id)
                     }
                 }
             }
         }
-        .navigationTitle("History")
+    }
+
+    private func statRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(value)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
     }
 
     private func gameRow(_ game: Game) -> some View {
@@ -73,41 +152,6 @@ struct HistoryView: View {
             }
             Text(scores)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-struct StatsView: View {
-    @Environment(AppState.self) private var app
-
-    var body: some View {
-        List {
-            ForEach(app.stats) { player in
-                Section(player.name) {
-                    row("Record", "\(player.wins)–\(player.losses)")
-                    row("Skunks given", "\(player.skunksGiven)")
-                    row("Skunks taken", "\(player.skunksTaken)")
-                    if player.handsCounted > 0 {
-                        row("Average hand", String(format: "%.1f", player.averageHand))
-                        row("Best hand", "\(player.bestHand)")
-                    }
-                }
-            }
-            if app.stats.isEmpty {
-                Text("Finish a game to see stats.")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .navigationTitle("Stats")
-    }
-
-    private func row(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label)
-            Spacer()
-            Text(value)
-                .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
     }

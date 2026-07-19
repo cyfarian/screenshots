@@ -1,6 +1,6 @@
 // Offline support: network-first with cache fallback, so updates arrive
 // instantly when online and the app still opens with no signal.
-const CACHE = "cribbage-v3";
+const CACHE = "cribbage-v4";
 const ASSETS = [
   "./", "index.html", "style.css", "app.js", "engine.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png",

@@ -2,7 +2,7 @@
 import * as E from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const SCHEMA_VERSION = 1;
 
 // ------------------------------------------------------------------- Storage
@@ -45,6 +45,7 @@ let finished = store.load("finished", []); // [game]
 let settings = store.load("settings", {
   muggins: false, skunkx: false, palette: "classic", hintSeen: false,
   scoreStyle: "numbers", // "numbers" (big +1..+5 build-up) | "named" (combo buttons)
+  boardZoom: false,
 });
 if (!settings.scoreStyle) settings.scoreStyle = "numbers";
 
@@ -75,11 +76,16 @@ function trackColor(t) {
 // ------------------------------------------------------------------- Tabs
 
 const TABS = ["game", "calc", "history", "settings"];
-const TITLES = { game: "Cribbage", calc: "Hand Calculator", history: "History", settings: "Settings" };
+const TITLES = { game: "Cribbage", calc: "Count", history: "History", settings: "Settings" };
 let currentTab = "game";
 let selectedTrack = 0;
 
-function switchTab(tab) {
+function switchTab(tab, { skipChooser = false } = {}) {
+  // During a game, the Count tab first asks HOW to count.
+  if (tab === "calc" && session && !skipChooser) {
+    $("count-modal").hidden = false;
+    return;
+  }
   currentTab = tab;
   for (const t of TABS) $("view-" + t).hidden = t !== tab;
   document.querySelectorAll("#tabbar .tab").forEach((b) =>
@@ -90,8 +96,31 @@ function switchTab(tab) {
   if (tab === "calc") renderCalc();
   if (tab === "history") renderHistory();
   if (tab === "settings") renderSettings();
+  $("nav-close").hidden = !(tab === "calc" || tab === "settings");
   updateWakeLock();
 }
+
+$("nav-close").addEventListener("click", () => switchTab("game"));
+
+$("count-numbers").addEventListener("click", () => {
+  settings.scoreStyle = "numbers";
+  persistSettings();
+  $("count-modal").hidden = true;
+  switchTab("game");
+});
+$("count-named").addEventListener("click", () => {
+  settings.scoreStyle = "named";
+  persistSettings();
+  $("count-modal").hidden = true;
+  switchTab("game");
+});
+$("count-cards").addEventListener("click", () => {
+  $("count-modal").hidden = true;
+  switchTab("calc", { skipChooser: true });
+});
+$("count-cancel").addEventListener("click", () => {
+  $("count-modal").hidden = true;
+});
 
 document.querySelectorAll("#tabbar .tab").forEach((b) =>
   b.addEventListener("click", () => switchTab(b.dataset.tab))
@@ -303,11 +332,6 @@ function renderPegPad(g) {
   $("custom-row").hidden = numbers;
   $("numbers-row").hidden = !numbers;
   $("pending-row").hidden = !numbers;
-  $("btn-style").textContent = numbers ? "🏷️" : "🔢";
-  $("btn-style").setAttribute(
-    "aria-label",
-    numbers ? "Switch to named scoring buttons" : "Switch to number scoring buttons"
-  );
 
   if (numbers) {
     const row = $("numbers-row");
@@ -459,31 +483,14 @@ $("btn-nexthand").addEventListener("click", () => {
   } catch { /* over */ }
 });
 
-$("btn-style").addEventListener("click", () => {
-  settings.scoreStyle = settings.scoreStyle === "numbers" ? "named" : "numbers";
-  pending = 0;
+$("btn-zoom").addEventListener("click", () => {
+  settings.boardZoom = !settings.boardZoom;
   persistSettings();
-  renderLiveGame();
+  $("btn-zoom").setAttribute("aria-pressed", String(settings.boardZoom));
+  if (session) scheduleBoardDraw(session.game);
 });
 
-// Events + end-game modals
-$("btn-events").addEventListener("click", () => {
-  const g = session.game;
-  const list = $("events-list");
-  list.innerHTML = "";
-  for (const e of [...g.events].reverse()) {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span class="dot" style="background:${trackColor(e.track)}"></span>
-      <span>${esc(E.trackName(g.config, e.track))}</span>
-      <span class="muted">${E.REASON_LABEL[e.reason] ?? e.reason}</span>
-      ${e.points > 0 ? `<span class="pts">+${e.points}</span>` : ""}`;
-    list.appendChild(li);
-  }
-  if (g.events.length === 0) list.innerHTML = `<li class="muted">Nothing pegged yet.</li>`;
-  $("events-modal").hidden = false;
-});
-$("events-close").addEventListener("click", () => { $("events-modal").hidden = true; });
+// End-game modal
 $("btn-newgame").addEventListener("click", () => { $("newgame-modal").hidden = false; });
 $("nm-cancel").addEventListener("click", () => { $("newgame-modal").hidden = true; });
 $("nm-abandon").addEventListener("click", () => {
@@ -544,9 +551,25 @@ function drawBoard(g) {
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
 
-  const scale = Math.min(cssWidth / layout.size.width, cssHeight / layout.size.height);
-  const offX = (cssWidth - layout.size.width * scale) / 2;
-  const offY = (cssHeight - layout.size.height * scale) / 2;
+  const fitScale = Math.min(cssWidth / layout.size.width, cssHeight / layout.size.height);
+  let scale = fitScale;
+  let offX = (cssWidth - layout.size.width * scale) / 2;
+  let offY = (cssHeight - layout.size.height * scale) / 2;
+  if (settings.boardZoom) {
+    // Zoomed window centered on the selected player's front peg, clamped to
+    // the board edges. Auto-follows because this runs every animation frame.
+    scale = fitScale * 2.6;
+    const tc0 = E.MODES[g.config.mode].trackCount;
+    const track = Math.min(selectedTrack, tc0 - 1);
+    const focus = layout.position(animatedFront(g, track), track);
+    const winW = cssWidth / scale;
+    const winH = cssHeight / scale;
+    const cx = Math.min(Math.max(focus.x, winW / 2), layout.size.width - winW / 2);
+    const cy = Math.min(Math.max(focus.y, winH / 2), layout.size.height - winH / 2);
+    offX = cssWidth / 2 - cx * scale;
+    offY = cssHeight / 2 - cy * scale;
+  }
+  $("btn-zoom").setAttribute("aria-pressed", String(!!settings.boardZoom));
   const P = (p) => [offX + p.x * scale, offY + p.y * scale];
 
   const styles = getComputedStyle(document.documentElement);
@@ -854,7 +877,51 @@ function finishCalcPeg() {
 
 // ----------------------------------------------------------------- History
 
+let historyMode = null; // "current" | "all"; defaults per live-game state
+
+$("hist-current-btn").addEventListener("click", () => { historyMode = "current"; renderHistory(); });
+$("hist-all-btn").addEventListener("click", () => { historyMode = "all"; renderHistory(); });
+
 function renderHistory() {
+  if (historyMode === null) historyMode = session ? "current" : "all";
+  const current = historyMode === "current";
+  $("history-current").hidden = !current;
+  $("history-all").hidden = current;
+  $("hist-current-btn").classList.toggle("active", current);
+  $("hist-all-btn").classList.toggle("active", !current);
+  $("hist-current-btn").setAttribute("aria-selected", String(current));
+  $("hist-all-btn").setAttribute("aria-selected", String(!current));
+  if (current) {
+    renderCurrentEvents();
+  } else {
+    renderAllGames();
+  }
+}
+
+function renderCurrentEvents() {
+  const list = $("events-list");
+  list.innerHTML = "";
+  const g = session?.game;
+  if (!g) {
+    list.innerHTML = `<li class="muted">No game in progress.</li>`;
+    return;
+  }
+  if (g.events.length === 0) {
+    list.innerHTML = `<li class="muted">Nothing pegged yet.</li>`;
+    return;
+  }
+  for (const e of [...g.events].reverse()) {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span class="dot" style="background:${trackColor(e.track)}"></span>
+      <span>${esc(E.trackName(g.config, e.track))}</span>
+      <span class="muted">${E.REASON_LABEL[e.reason] ?? e.reason}</span>
+      ${e.points > 0 ? `<span class="pts">+${e.points}</span>` : ""}`;
+    list.appendChild(li);
+  }
+}
+
+function renderAllGames() {
   const statsBox = $("stats-cards");
   statsBox.innerHTML = "";
   const stats = E.computeStats(finished);
