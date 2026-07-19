@@ -1,0 +1,37 @@
+# XcodeGen spec. The .xcodeproj is generated on CI (`xcodegen generate`)
+# and never committed. Signing identifiers are injected by the workflow via
+# xcodebuild overrides (DEVELOPMENT_TEAM, PRODUCT_BUNDLE_IDENTIFIER).
+name: Cribbage
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  CribbageEngine:
+    path: CribbageEngine
+targets:
+  Cribbage:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - App
+    dependencies:
+      - package: CribbageEngine
+    scheme:
+      testTargets: []
+      gatherCoverageData: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.cribbage
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.0"
+        INFOPLIST_KEY_CFBundleDisplayName: Cribbage
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "5.9"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

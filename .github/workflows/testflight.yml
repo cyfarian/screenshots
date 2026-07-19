@@ -1,0 +1,87 @@
+# Builds, signs, and uploads the app to TestFlight — entirely on a cloud Mac.
+#
+# Required repository secrets (see SETUP.md):
+#   ASC_KEY_ID      App Store Connect API key ID
+#   ASC_ISSUER_ID   App Store Connect issuer ID
+#   ASC_KEY_P8      Contents of the AuthKey_XXXX.p8 file
+#   APPLE_TEAM_ID   10-character Apple Developer team ID
+#   BUNDLE_ID       e.g. com.yourname.cribbage
+#
+# Runs only on manual dispatch or version tags to conserve macOS runner
+# minutes (billed at 10x on private repos).
+name: TestFlight
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-and-upload:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Write App Store Connect API key
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8"
+
+      - name: Archive (cloud-managed signing)
+        run: |
+          set -o pipefail
+          archive() {
+            xcodebuild archive \
+              -project Cribbage.xcodeproj \
+              -scheme Cribbage \
+              -destination 'generic/platform=iOS' \
+              -archivePath build/Cribbage.xcarchive \
+              -allowProvisioningUpdates \
+              -allowProvisioningDeviceRegistration \
+              -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8" \
+              -authenticationKeyID "$ASC_KEY_ID" \
+              -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+              DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+              PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+              CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
+          }
+          # One retry: Apple's signing service occasionally flakes transiently.
+          archive || { echo "::warning::archive failed once, retrying"; sleep 30; archive; }
+
+      - name: Export and upload to App Store Connect
+        run: |
+          plutil -replace teamID -string "$APPLE_TEAM_ID" ci/ExportOptions.plist
+          xcodebuild -exportArchive \
+            -archivePath build/Cribbage.xcarchive \
+            -exportOptionsPlist ci/ExportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcode-logs
+          path: |
+            build/**/*.log
+            ~/Library/Logs/gym
+            build/export
+          if-no-files-found: ignore
