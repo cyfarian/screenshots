@@ -88,7 +88,7 @@ struct BoardView: View {
                 context.stroke(tick, with: .color(.secondary.opacity(0.5)), lineWidth: 1)
             }
 
-            if hole % 10 == 0 {
+            if hole % 10 == 0 && !skunkHoles.contains(hole) {
                 let reach = halfWidth + 1.05
                 let at = point((center.x + reach * normal.x, center.y + reach * normal.y))
                 context.draw(
