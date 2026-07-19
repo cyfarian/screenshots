@@ -30,7 +30,7 @@ struct RootTabView: View {
                 .tabItem { Label("Game", systemImage: "target") }
                 .tag(AppTab.game)
             NavigationStack { HandCalculatorView() }
-                .tabItem { Label("Count", systemImage: "square.grid.3x2") }
+                .tabItem { Label("Count", systemImage: "plus") }
                 .tag(AppTab.calc)
             NavigationStack { HistoryView() }
                 .tabItem { Label("History", systemImage: "chart.bar") }

@@ -3,7 +3,7 @@ import * as E from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
 const TROPHY = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5a1.8 1.8 0 0 0 .3 3.6L7 9M17 5h2.5a1.8 1.8 0 0 1-.3 3.6L17 9"/></svg>';
-const VERSION = "1.5.0";
+const VERSION = "1.5.1";
 const SCHEMA_VERSION = 1;
 
 // ------------------------------------------------------------------- Storage
