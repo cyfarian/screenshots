@@ -36,11 +36,16 @@ const errors = [];
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text()); });
 
-await page.goto(BASE, { waitUntil: "networkidle" });
+const foldCheck = async (label) => {
+  const fold = await page.evaluate(() => {
+    const el = document.querySelector("#view-game");
+    return { scroll: el.scrollHeight, client: el.clientHeight };
+  });
+  console.log(`fold (${label}):`, fold, "fits:", fold.scroll <= fold.client + 1);
+};
 
-// Tab bar exists; game tab shows setup
+await page.goto(BASE, { waitUntil: "networkidle" });
 console.log("tabs:", await page.locator("#tabbar .tab").count());
-await page.screenshot({ path: "shot-1-setup.png" });
 
 // Start a 2p muggins game
 await page.fill("#ng-name-0", "Cy");
@@ -48,67 +53,79 @@ await page.fill("#ng-name-1", "Jess");
 await page.check("#ng-muggins");
 await page.click("#ng-start");
 await page.waitForSelector("#game-live:not([hidden])");
-
-// First-run hint should appear once; dismiss it
 console.log("hint shown:", await page.locator("#hint-overlay").isVisible());
 await page.click("#hint-done");
 
-// ABOVE THE FOLD: the game view must not scroll
-const fold = await page.evaluate(() => {
-  const el = document.querySelector("#view-game");
-  return { scroll: el.scrollHeight, client: el.clientHeight, body: document.body.scrollHeight, win: innerHeight };
-});
-console.log("fold check:", fold, "fits:", fold.scroll <= fold.client + 1);
-await page.screenshot({ path: "shot-2-game.png" });
+// Default scoring style is big numbers
+console.log("numbers row visible:", await page.locator("#numbers-row").isVisible());
+console.log("named grid hidden:", await page.locator("#quick-grid").isHidden());
+await foldCheck("numbers");
+await page.screenshot({ path: "shot-numbers.png" });
 
-// Quick peg + toast with undo
-await page.click("#quick-grid button:nth-child(1)"); // 15 for Cy
-console.log("toast:", (await page.locator("#toast-text").textContent()).trim());
-await page.click("#toast-undo"); // undo via toast
-let s0 = await page.locator(".score-card").nth(0).locator(".pts").textContent();
-console.log("after toast undo:", s0); // expect 0
-
-// Custom counter zeroes after pegging
-console.log("peg btn disabled at 0:", await page.locator("#custom-peg").isDisabled());
-for (let i = 0; i < 7; i++) await page.click("#custom-plus");
-console.log("peg btn label:", (await page.locator("#custom-peg").textContent()).trim()); // Peg +7
-await page.click("#custom-peg");
-console.log("after custom peg:",
+// +5 +3 build up, commit pegs 8 and zeroes
+await page.click("#numbers-row .num-btn:nth-child(5)");
+await page.click("#numbers-row .num-btn:nth-child(3)");
+console.log("pending label:", (await page.locator("#pending-peg").textContent()).trim()); // Peg +8
+await page.click("#pending-peg");
+console.log("after commit:",
   (await page.locator(".score-card").nth(0).locator(".pts").textContent()).trim(),
-  "| label:", (await page.locator("#custom-peg").textContent()).trim(),
-  "| disabled:", await page.locator("#custom-peg").isDisabled());
+  "| label:", (await page.locator("#pending-peg").textContent()).trim(),
+  "| disabled:", await page.locator("#pending-peg").isDisabled());
 
-// Calculator via tab: 29 hand pegged to Jess via track chip
+// Pending resets when switching player
+await page.click("#numbers-row .num-btn:nth-child(4)");
+await page.locator(".score-card").nth(1).click();
+console.log("pending after player switch disabled:", await page.locator("#pending-peg").isDisabled());
+
+// Clear button
+await page.click("#numbers-row .num-btn:nth-child(2)");
+await page.click("#pending-clear");
+console.log("after clear disabled:", await page.locator("#pending-peg").isDisabled());
+
+// Toggle to named style in-game; instant peg + toast undo still work
+await page.click("#btn-style");
+console.log("named grid visible:", await page.locator("#quick-grid").isVisible());
+await foldCheck("named");
+await page.screenshot({ path: "shot-named.png" });
+await page.click("#quick-grid button:nth-child(1)"); // 15 for Jess
+console.log("toast:", (await page.locator("#toast-text").textContent()).trim());
+await page.click("#toast-undo");
+console.log("jess after toast undo:",
+  (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim());
+
+// Style persists across reload
+await page.goto(BASE, { waitUntil: "networkidle" });
+await page.waitForSelector("#game-live:not([hidden])");
+console.log("named persists after reload:", await page.locator("#quick-grid").isVisible());
+await page.click("#btn-style"); // back to numbers
+
+// Calculator: 29 hand pegged to Jess, muggins split 25/4
 await page.click("#btn-count");
 await page.waitForSelector("#view-calc:not([hidden])");
 for (const [r, s] of [[5, "hearts"], [5, "diamonds"], [5, "spades"], [11, "clubs"], [5, "clubs"]]) {
   await page.click(`#card-grid button[data-rank="${r}"][data-suit="${s}"]`);
 }
 console.log("calc total:", await page.locator("#calc-result .total .p").textContent());
-await page.click("[data-chip='1']"); // switch peg target to Jess
-// muggins: claim 25, award 4 to Cy
+await page.click("[data-chip='1']");
 for (let i = 0; i < 4; i++) await page.click("#claim-minus");
 await page.click("[data-mug='0']");
 await page.waitForSelector("#game-live:not([hidden])");
 console.log("after muggins:",
   (await page.locator(".score-card").nth(0).locator(".pts").textContent()).trim(),
-  (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim()); // 11, 25
+  (await page.locator(".score-card").nth(1).locator(".pts").textContent()).trim());
 
 // Events modal
 await page.click("#btn-events");
 console.log("event rows:", await page.locator("#events-list li").count());
 await page.click("#events-close");
-
-// Wait for peg animation to settle, then screenshot
 await page.waitForTimeout(600);
-await page.screenshot({ path: "shot-3-game-mid.png" });
+await page.screenshot({ path: "shot-numbers-mid.png" });
 
-// Win the game, finish, check history tab
+// Win via repeated numbers commits for Jess
 await page.locator(".score-card").nth(1).click();
-for (let i = 0; i < 29; i++) await page.click("#custom-plus");
-for (let i = 0; i < 4 && !(await page.locator("#game-over").isVisible()); i++) {
-  await page.click("#custom-peg");
-  for (let k = 0; k < 29; k++) await page.click("#custom-plus");
+for (let round = 0; round < 6 && !(await page.locator("#game-over").isVisible()); round++) {
+  for (let i = 0; i < 5; i++) await page.click("#numbers-row .num-btn:nth-child(5)"); // +25
+  await page.click("#pending-peg");
 }
 console.log("game over:", await page.locator("#game-over").isVisible());
 await page.click("#go-next");
@@ -116,21 +133,21 @@ await page.waitForSelector("#game-setup:not([hidden])");
 await page.click("[data-tab='history']");
 console.log("history entries:", await page.locator("#games-list li").count());
 
-// Settings: palette switch persists
+// Settings: scoring style picker + palette both persist
 await page.click("[data-tab='settings']");
+await page.selectOption("#set-style", "named");
 await page.selectOption("#set-palette", "colorblind");
 await page.goto(BASE, { waitUntil: "networkidle" });
 const track0 = await page.evaluate(() =>
   getComputedStyle(document.documentElement).getPropertyValue("--track0").trim());
-console.log("palette after reload:", track0); // expect #0072b2
-
-// Hint should NOT reappear on a second game
+console.log("palette after reload:", track0);
 await page.fill("#ng-name-0", "A");
 await page.click("#ng-start");
 await page.waitForSelector("#game-live:not([hidden])");
-console.log("hint on 2nd game:", await page.locator("#hint-overlay").isVisible());
+console.log("style from settings (named):", await page.locator("#quick-grid").isVisible());
+console.log("hint on later game:", await page.locator("#hint-overlay").isVisible());
 
-// End-game confirm modal (abandon)
+// Abandon flow
 await page.click("#btn-newgame");
 await page.click("#nm-abandon");
 await page.waitForSelector("#game-setup:not([hidden])");

@@ -68,6 +68,7 @@
       <div id="game-meta">
         <span id="meta-text" class="muted"></span>
         <span id="meta-actions">
+          <button id="btn-style" class="icon-btn" aria-label="Switch scoring buttons">🔢</button>
           <button id="btn-events" class="icon-btn" aria-label="Event history">📜</button>
           <button id="btn-newgame" class="icon-btn" aria-label="End or restart game">✕</button>
         </span>
@@ -79,11 +80,18 @@
       <div id="game-over" class="card" hidden></div>
 
       <div id="peg-pad">
-        <div id="quick-grid"></div>
-        <div id="custom-row">
+        <!-- Named style: instant-peg combo grid + build-up stepper -->
+        <div id="quick-grid" hidden></div>
+        <div id="custom-row" hidden>
           <button id="custom-minus" class="stepper" aria-label="Decrease points">−</button>
           <button id="custom-peg" class="primary" disabled>Peg</button>
           <button id="custom-plus" class="stepper" aria-label="Increase points">+</button>
+        </div>
+        <!-- Numbers style: big +1…+5 build up a pending total -->
+        <div id="numbers-row" hidden></div>
+        <div id="pending-row" hidden>
+          <button id="pending-clear" class="stepper" aria-label="Clear pending points">⌫</button>
+          <button id="pending-peg" class="primary" disabled>Peg</button>
         </div>
         <div id="action-row">
           <button id="btn-undo">↩︎ Undo</button>
@@ -118,6 +126,16 @@
 
   <!-- ======================================================== Settings -->
   <section id="view-settings" hidden>
+    <div class="card">
+      <div class="card-title">Scoring</div>
+      <label class="field">
+        <span>Scoring buttons</span>
+        <select id="set-style">
+          <option value="numbers">Big numbers (+1…+5)</option>
+          <option value="named">Named combos (15, Pair…)</option>
+        </select>
+      </label>
+    </div>
     <div class="card">
       <div class="card-title">Appearance</div>
       <label class="field">

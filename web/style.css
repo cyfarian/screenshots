@@ -1,5 +1,7 @@
 :root {
   --bg: #f3f1ea;
+  --btn-fill: #47433b;
+  --btn-fill-text: #ffffff;
   --card: #ffffff;
   --text: #1c1a16;
   --muted: #6d675c;
@@ -14,6 +16,8 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #15140f;
+    --btn-fill: #5a554b;
+    --btn-fill-text: #ffffff;
     --card: #221f19;
     --text: #efeade;
     --muted: #9c968a;
@@ -23,6 +27,7 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; }
 body {
   background: var(--bg);
@@ -82,7 +87,7 @@ main > section {
   font-size: 10px; color: var(--muted); padding: 7px 0 5px;
 }
 #tabbar .tab span { font-size: 19px; line-height: 1; }
-#tabbar .tab.active { color: var(--accent); font-weight: 700; }
+#tabbar .tab.active { color: var(--accent); font-weight: 800; }
 
 .card {
   background: var(--card);
@@ -148,9 +153,9 @@ button:disabled { opacity: 0.4; pointer-events: none; }
   border-radius: 12px; border: 2px solid transparent;
   background: var(--card); cursor: pointer;
 }
-.score-card .name { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.score-card .pts { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.score-card .crib-badge { font-size: 10px; color: var(--muted); }
+.score-card { padding: 6px 4px; }
+.score-card .name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-card .pts { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
 
 #game-meta { flex: none; display: flex; align-items: center; font-size: 13px; }
 #meta-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -159,17 +164,33 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 #board { border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
 
 #peg-pad { flex: none; display: flex; flex-direction: column; gap: 6px; }
-#quick-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-#quick-grid button { padding: 6px 2px; }
-#quick-grid .q-label { display: block; font-size: 13px; font-weight: 700; }
-#quick-grid .q-pts { display: block; font-size: 10px; color: var(--muted); }
+#quick-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+#quick-grid button { padding: 8px 2px; min-height: 48px; border: none; color: #fff; }
+#quick-grid .q-label { display: block; font-size: 15px; font-weight: 800; }
+#quick-grid .q-pts { display: block; font-size: 11px; color: rgba(255,255,255,0.85); }
 
+#numbers-row { display: flex; gap: 6px; }
+#numbers-row .num-btn {
+  flex: 1; min-height: 62px; border: none; border-radius: 12px;
+  color: #fff; font-size: 24px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+#pending-row { display: flex; gap: 6px; }
+#pending-row .stepper { width: 62px; font-size: 20px; font-weight: 700; }
+#pending-row .primary { flex: 1; width: auto; min-height: 52px; font-size: 19px; }
 #custom-row { display: flex; gap: 6px; }
 #custom-row .stepper { width: 52px; font-size: 20px; font-weight: 700; padding: 8px 0; }
+#custom-row .stepper, #pending-row .stepper {
+  background: var(--btn-fill); color: var(--btn-fill-text); border: none;
+}
 #custom-row .primary { flex: 1; width: auto; padding: 8px; }
 
 #action-row { display: flex; gap: 6px; }
-#action-row button { flex: 1; font-size: 13px; padding: 9px 2px; }
+#action-row button {
+  flex: 1; font-size: 14px; font-weight: 700; padding: 11px 2px;
+  background: var(--btn-fill); color: var(--btn-fill-text); border: none;
+}
+#action-row button:disabled { opacity: 0.35; }
 
 #game-over { flex: none; text-align: center; margin-bottom: 0; }
 #game-over .headline { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
@@ -177,7 +198,6 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 #game-over .buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
 
 /* ----------------------------------------------------------------- Toast */
-#toast[hidden] { display: none; }
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(74px + env(safe-area-inset-bottom));
@@ -194,7 +214,6 @@ button:disabled { opacity: 0.4; pointer-events: none; }
 }
 
 /* ----------------------------------------------------------------- Modals */
-.modal[hidden] { display: none; }
 .modal {
   position: fixed; inset: 0; z-index: 40;
   background: rgba(0,0,0,0.45);

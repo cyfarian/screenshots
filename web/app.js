@@ -2,7 +2,7 @@
 import * as E from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const SCHEMA_VERSION = 1;
 
 // ------------------------------------------------------------------- Storage
@@ -44,7 +44,9 @@ let session = store.load("session", null); // { game, match|null }
 let finished = store.load("finished", []); // [game]
 let settings = store.load("settings", {
   muggins: false, skunkx: false, palette: "classic", hintSeen: false,
+  scoreStyle: "numbers", // "numbers" (big +1..+5 build-up) | "named" (combo buttons)
 });
+if (!settings.scoreStyle) settings.scoreStyle = "numbers";
 
 function persistSession() {
   if (session) store.save("session", session);
@@ -222,7 +224,7 @@ $("ng-start").addEventListener("click", () => {
     : null;
   session = { game, match };
   selectedTrack = 0;
-  customPoints = 0;
+  pending = 0;
   animState = null;
   persistSession();
   renderGameTab();
@@ -242,7 +244,7 @@ const QUICK = [
   { label: "Nobs", pts: 1, reason: "nobs" },
   { label: "Heels", pts: 2, reason: "heels" },
 ];
-let customPoints = 0;
+let pending = 0;
 
 function renderLiveGame() {
   const g = session.game;
@@ -263,13 +265,17 @@ function renderLiveGame() {
       "aria-label",
       `${E.trackName(g.config, t)}: ${E.trackScore(g, t)} points${t === crib ? ", has the crib" : ""}`
     );
-    el.style.borderColor = selected ? trackColor(t) : "transparent";
-    el.style.background = selected ? `color-mix(in srgb, ${trackColor(t)} 14%, var(--card))` : "";
+    el.style.borderColor = trackColor(t);
+    el.style.background = selected ? trackColor(t) : "var(--card)";
+    const inkColor = selected ? "#fff" : trackColor(t);
     el.innerHTML = `
-      <div class="name">${esc(E.trackName(g.config, t))}</div>
-      <div class="pts" style="color:${trackColor(t)}">${E.trackScore(g, t)}</div>
-      <div class="crib-badge">${t === crib ? "🂠 crib" : "&nbsp;"}</div>`;
-    el.addEventListener("click", () => { selectedTrack = t; renderLiveGame(); });
+      <div class="name" style="color:${selected ? "#fff" : "var(--text)"}">${esc(E.trackName(g.config, t))}${t === crib ? " · crib" : ""}</div>
+      <div class="pts" style="color:${inkColor}">${E.trackScore(g, t)}</div>`;
+    el.addEventListener("click", () => {
+      if (selectedTrack !== t) pending = 0; // pending points belong to a player
+      selectedTrack = t;
+      renderLiveGame();
+    });
     cards.appendChild(el);
   }
 
@@ -292,26 +298,56 @@ function renderLiveGame() {
 }
 
 function renderPegPad(g) {
-  const grid = $("quick-grid");
-  grid.innerHTML = "";
-  for (const q of QUICK) {
-    const b = document.createElement("button");
-    b.innerHTML = `<span class="q-label">${q.label}</span><span class="q-pts">+${q.pts}</span>`;
-    b.setAttribute("aria-label", `${q.label}, ${q.pts} point${q.pts > 1 ? "s" : ""}`);
-    b.style.borderColor = trackColor(selectedTrack);
-    b.addEventListener("click", () => doPeg(selectedTrack, q.pts, q.reason));
-    grid.appendChild(b);
+  const numbers = settings.scoreStyle === "numbers";
+  $("quick-grid").hidden = numbers;
+  $("custom-row").hidden = numbers;
+  $("numbers-row").hidden = !numbers;
+  $("pending-row").hidden = !numbers;
+  $("btn-style").textContent = numbers ? "🏷️" : "🔢";
+  $("btn-style").setAttribute(
+    "aria-label",
+    numbers ? "Switch to named scoring buttons" : "Switch to number scoring buttons"
+  );
+
+  if (numbers) {
+    const row = $("numbers-row");
+    row.innerHTML = "";
+    for (let n = 1; n <= 5; n++) {
+      const b = document.createElement("button");
+      b.className = "num-btn";
+      b.textContent = `+${n}`;
+      b.setAttribute("aria-label", `Add ${n} point${n > 1 ? "s" : ""}`);
+      b.style.background = trackColor(selectedTrack);
+      b.addEventListener("click", () => {
+        pending = Math.min(29, pending + n);
+        syncPendingButtons();
+      });
+      row.appendChild(b);
+    }
+  } else {
+    const grid = $("quick-grid");
+    grid.innerHTML = "";
+    for (const q of QUICK) {
+      const b = document.createElement("button");
+      b.innerHTML = `<span class="q-label">${q.label}</span><span class="q-pts">+${q.pts}</span>`;
+      b.setAttribute("aria-label", `${q.label}, ${q.pts} point${q.pts > 1 ? "s" : ""}`);
+      b.style.background = trackColor(selectedTrack);
+      b.addEventListener("click", () => doPeg(selectedTrack, q.pts, q.reason));
+      grid.appendChild(b);
+    }
   }
-  syncCustomButton();
+  syncPendingButtons();
   $("btn-undo").disabled = g.events.length === 0;
 }
 
-function syncCustomButton() {
-  const btn = $("custom-peg");
-  btn.textContent = customPoints > 0 ? `Peg +${customPoints}` : "Peg";
-  btn.disabled = customPoints === 0;
-  btn.style.background = customPoints > 0 ? trackColor(selectedTrack) : "";
-  btn.style.borderColor = trackColor(selectedTrack);
+function syncPendingButtons() {
+  for (const btn of [$("custom-peg"), $("pending-peg")]) {
+    btn.textContent = pending > 0 ? `Peg +${pending}` : "Peg";
+    btn.disabled = pending === 0;
+    btn.style.background = pending > 0 ? trackColor(selectedTrack) : "";
+    btn.style.borderColor = trackColor(selectedTrack);
+  }
+  $("pending-clear").disabled = pending === 0;
 }
 
 function renderGameOver(g, tc) {
@@ -388,18 +424,24 @@ function doPeg(track, points, reason, breakdown = null) {
 }
 
 $("custom-minus").addEventListener("click", () => {
-  customPoints = Math.max(0, customPoints - 1);
-  syncCustomButton();
+  pending = Math.max(0, pending - 1);
+  syncPendingButtons();
 });
 $("custom-plus").addEventListener("click", () => {
-  customPoints = Math.min(29, customPoints + 1);
-  syncCustomButton();
+  pending = Math.min(29, pending + 1);
+  syncPendingButtons();
 });
-$("custom-peg").addEventListener("click", () => {
-  if (customPoints > 0 && doPeg(selectedTrack, customPoints, "manual")) {
-    customPoints = 0; // counter zeroes out after the peg advances
-    syncCustomButton();
+function commitPending() {
+  if (pending > 0 && doPeg(selectedTrack, pending, "manual")) {
+    pending = 0; // counter zeroes out after the peg advances
+    syncPendingButtons();
   }
+}
+$("custom-peg").addEventListener("click", commitPending);
+$("pending-peg").addEventListener("click", commitPending);
+$("pending-clear").addEventListener("click", () => {
+  pending = 0;
+  syncPendingButtons();
 });
 $("btn-undo").addEventListener("click", () => {
   E.undo(session.game);
@@ -415,6 +457,13 @@ $("btn-nexthand").addEventListener("click", () => {
     showToast(`Next hand — ${dealer} deals`, false);
     renderLiveGame();
   } catch { /* over */ }
+});
+
+$("btn-style").addEventListener("click", () => {
+  settings.scoreStyle = settings.scoreStyle === "numbers" ? "named" : "numbers";
+  pending = 0;
+  persistSettings();
+  renderLiveGame();
 });
 
 // Events + end-game modals
@@ -514,8 +563,8 @@ function drawBoard(g) {
     ctx.moveTo(...P(pts[0]));
     for (const p of pts.slice(1)) ctx.lineTo(...P(p));
     ctx.strokeStyle = trackColor(t);
-    ctx.globalAlpha = 0.16;
-    ctx.lineWidth = 0.82 * layout.laneGap * scale;
+    ctx.globalAlpha = 0.34;
+    ctx.lineWidth = 0.95 * layout.laneGap * scale;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.stroke();
@@ -533,7 +582,7 @@ function drawBoard(g) {
     const n = layout.perpendicular(hole);
     if (!skunkHoles.has(hole)) {
       const r = halfWidth + 0.55;
-      ctx.globalAlpha = 0.5;
+      ctx.globalAlpha = 0.8;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(...P({ x: c.x + r * n.x, y: c.y + r * n.y }));
@@ -543,18 +592,18 @@ function drawBoard(g) {
     }
     if (hole % 10 === 0 && !skunkHoles.has(hole)) {
       const r = halfWidth + 1.05;
-      ctx.font = `500 ${Math.max(7, 0.5 * scale)}px -apple-system, sans-serif`;
+      ctx.font = `600 ${Math.max(8, 0.58 * scale)}px -apple-system, sans-serif`;
       ctx.fillText(String(hole), ...P({ x: c.x + r * n.x, y: c.y + r * n.y }));
     }
   }
 
   // Holes
   ctx.fillStyle = textColor;
-  ctx.globalAlpha = 0.45;
+  ctx.globalAlpha = 0.75;
   for (let t = 0; t < tc; t++) {
     for (let hole = 0; hole <= layout.targetScore; hole++) {
       const [x, y] = P(layout.position(hole, t));
-      const rad = (hole > 0 && hole % 5 === 0 ? 0.16 : 0.12) * layout.laneGap * scale;
+      const rad = (hole > 0 && hole % 5 === 0 ? 0.19 : 0.15) * layout.laneGap * scale;
       ctx.beginPath();
       ctx.arc(x, y, rad, 0, Math.PI * 2);
       ctx.fill();
@@ -601,7 +650,7 @@ function drawBoard(g) {
     if (front !== pegs.front) animating = true;
     for (const [pos, isFront] of [[pegs.back, false], [front, true]]) {
       const [x, y] = P(layout.position(pos, t));
-      const rad = (isFront ? 0.36 : 0.28) * layout.laneGap * scale;
+      const rad = (isFront ? 0.42 : 0.32) * layout.laneGap * scale;
       ctx.beginPath();
       ctx.arc(x, y, rad, 0, Math.PI * 2);
       ctx.fillStyle = trackColor(t);
@@ -861,6 +910,7 @@ function renderHistory() {
 // ---------------------------------------------------------------- Settings
 
 function renderSettings() {
+  $("set-style").value = settings.scoreStyle;
   $("set-muggins").checked = settings.muggins;
   $("set-skunkx").checked = settings.skunkx;
   $("set-palette").value = settings.palette;
@@ -875,6 +925,11 @@ $("set-skunkx").addEventListener("change", (e) => {
   settings.skunkx = e.target.checked;
   persistSettings();
   $("ng-skunkx").checked = settings.skunkx;
+});
+$("set-style").addEventListener("change", (e) => {
+  settings.scoreStyle = e.target.value;
+  pending = 0;
+  persistSettings();
 });
 $("set-palette").addEventListener("change", (e) => {
   settings.palette = e.target.value;

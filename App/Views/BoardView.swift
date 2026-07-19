@@ -122,9 +122,9 @@ struct BoardView: View {
             }
             context.stroke(
                 path,
-                with: .color(TrackStyle.color(track).opacity(0.18)),
+                with: .color(TrackStyle.color(track).opacity(0.34)),
                 style: StrokeStyle(
-                    lineWidth: 0.82 * layout.laneGap * scale,
+                    lineWidth: 0.95 * layout.laneGap * scale,
                     lineCap: .round, lineJoin: .round
                 )
             )
@@ -149,7 +149,7 @@ struct BoardView: View {
                 var tick = Path()
                 tick.move(to: point((center.x + reach * normal.x, center.y + reach * normal.y)))
                 tick.addLine(to: point((center.x - reach * normal.x, center.y - reach * normal.y)))
-                context.stroke(tick, with: .color(.secondary.opacity(0.5)), lineWidth: 1)
+                context.stroke(tick, with: .color(.secondary.opacity(0.8)), lineWidth: 1)
             }
 
             if hole % 10 == 0 && !skunkHoles.contains(hole) {
@@ -157,7 +157,7 @@ struct BoardView: View {
                 let at = point((center.x + reach * normal.x, center.y + reach * normal.y))
                 context.draw(
                     Text(verbatim: "\(hole)")
-                        .font(.system(size: max(7, 0.5 * scale), weight: .medium))
+                        .font(.system(size: max(8, 0.58 * scale), weight: .semibold))
                         .foregroundStyle(.secondary),
                     at: at
                 )
@@ -172,12 +172,12 @@ struct BoardView: View {
         for track in 0..<layout.trackCount {
             for hole in 0...layout.targetScore {
                 let center = point(layout.position(hole: hole, track: track))
-                let radius = (hole > 0 && hole % 5 == 0 ? 0.16 : 0.12) * layout.laneGap * scale
+                let radius = (hole > 0 && hole % 5 == 0 ? 0.19 : 0.15) * layout.laneGap * scale
                 let rect = CGRect(
                     x: center.x - radius, y: center.y - radius,
                     width: radius * 2, height: radius * 2
                 )
-                context.fill(Path(ellipseIn: rect), with: .color(.primary.opacity(0.45)))
+                context.fill(Path(ellipseIn: rect), with: .color(.primary.opacity(0.75)))
             }
         }
     }
@@ -252,7 +252,7 @@ struct BoardView: View {
             let backCenter = point(layout.position(hole: pegs.back, track: track))
             let frontCenter = point(layout.position(atDistance: front, track: track))
             for (center, isFront) in [(backCenter, false), (frontCenter, true)] {
-                let radius = (isFront ? 0.36 : 0.28) * layout.laneGap * scale
+                let radius = (isFront ? 0.42 : 0.32) * layout.laneGap * scale
                 let rect = CGRect(
                     x: center.x - radius, y: center.y - radius,
                     width: radius * 2, height: radius * 2

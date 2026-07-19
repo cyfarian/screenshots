@@ -26,7 +26,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.cribbage
         GENERATE_INFOPLIST_FILE: YES
         CURRENT_PROJECT_VERSION: "1"
-        MARKETING_VERSION: "0.2.0"
+        MARKETING_VERSION: "0.3.0"
         INFOPLIST_KEY_CFBundleDisplayName: Cribbage
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

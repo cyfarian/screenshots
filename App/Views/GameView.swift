@@ -7,6 +7,7 @@ import CribbageEngine
 struct GameView: View {
     @Environment(AppState.self) private var app
     @AppStorage("scoringHintSeen") private var scoringHintSeen = false
+    @AppStorage("scoreStyle") private var scoreStyle = "numbers"
     @State private var showingHistory = false
     @State private var showingAbandonConfirm = false
 
@@ -91,9 +92,19 @@ struct GameView: View {
             HStack {
                 Text("\(game.config.playerNames[game.dealerSeat]) deals")
                 if let match {
-                    Spacer()
-                    Text(matchSummary(match, trackCount: game.config.mode.trackCount))
+                    Text("· " + matchSummary(match, trackCount: game.config.mode.trackCount))
                 }
+                Spacer()
+                Button {
+                    scoreStyle = scoreStyle == "numbers" ? "named" : "numbers"
+                } label: {
+                    Image(systemName: scoreStyle == "numbers" ? "tag" : "number")
+                }
+                .accessibilityLabel(
+                    scoreStyle == "numbers"
+                        ? "Switch to named scoring buttons"
+                        : "Switch to number scoring buttons"
+                )
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -107,24 +118,23 @@ struct GameView: View {
             app.selectedTrack = track
         } label: {
             VStack(spacing: 1) {
-                Text(game.config.trackName(track))
-                    .font(.caption)
+                Text(game.config.trackName(track) + (isCrib ? " · crib" : ""))
+                    .font(.caption.weight(.semibold))
                     .lineLimit(1)
+                    .foregroundStyle(selected ? Color.white : Color.primary)
                 Text("\(game.score(ofTrack: track))")
-                    .font(.title3.bold().monospacedDigit())
-                Text(isCrib ? "crib" : " ")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.secondary)
+                    .font(.title2.bold().monospacedDigit())
+                    .foregroundStyle(selected ? Color.white : TrackStyle.color(track))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
+            .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(TrackStyle.color(track).opacity(selected ? 0.22 : 0.07))
+                    .fill(selected ? TrackStyle.color(track) : Color(.secondarySystemGroupedBackground))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(TrackStyle.color(track), lineWidth: selected ? 2 : 0)
+                    .stroke(TrackStyle.color(track), lineWidth: 2)
             )
         }
         .buttonStyle(.plain)

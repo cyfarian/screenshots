@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage("scoreStyle") private var scoreStyle = "numbers"
     @AppStorage("palette") private var palette = "classic"
     @AppStorage("defaultMuggins") private var defaultMuggins = false
     @AppStorage("defaultSkunksCountExtra") private var defaultSkunksCountExtra = false
@@ -8,6 +9,12 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Scoring") {
+                Picker("Scoring buttons", selection: $scoreStyle) {
+                    Text("Big numbers (+1…+5)").tag("numbers")
+                    Text("Named combos (15, Pair…)").tag("named")
+                }
+            }
             Section("Appearance") {
                 Picker("Peg colors", selection: $palette) {
                     Text("Classic (red / blue)").tag("classic")
