@@ -2,13 +2,12 @@ import SwiftUI
 import UIKit
 import CribbageEngine
 
-/// The scoring controls: quick buttons for common pegging scores, a custom
-/// amount stepper, hand counting, undo, and next-hand.
+/// The scoring controls: quick buttons for common pegging scores, a build-up
+/// counter that zeroes out after each peg, hand counting, undo, next hand.
 struct PegPadView: View {
     @Environment(AppState.self) private var app
-    @Binding var selectedTrack: Int
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
-    @State private var customPoints = 1
+    @State private var customPoints = 0
 
     private struct QuickScore: Identifiable {
         let label: String
@@ -24,15 +23,15 @@ struct PegPadView: View {
         QuickScore(label: "Run 4", points: 4, reason: .run(4)),
         QuickScore(label: "Run 5", points: 5, reason: .run(5)),
         QuickScore(label: "Go", points: 1, reason: .go),
-        QuickScore(label: "Last card", points: 1, reason: .lastCard),
+        QuickScore(label: "Last", points: 1, reason: .lastCard),
         QuickScore(label: "31", points: 2, reason: .thirtyOne),
         QuickScore(label: "Nobs", points: 1, reason: .nobs),
         QuickScore(label: "Heels", points: 2, reason: .heels),
     ]
 
     var body: some View {
-        VStack(spacing: 10) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
+        VStack(spacing: 8) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
                 ForEach(quickScores) { quick in
                     Button {
                         peg(points: quick.points, reason: quick.reason)
@@ -46,43 +45,50 @@ struct PegPadView: View {
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .frame(maxWidth: .infinity, minHeight: 38)
                     }
                     .buttonStyle(.bordered)
-                    .tint(TrackStyle.color(selectedTrack))
+                    .tint(TrackStyle.color(app.selectedTrack))
+                    .accessibilityLabel("\(quick.label), \(quick.points) points")
                 }
             }
 
-            HStack(spacing: 8) {
-                Stepper("+\(customPoints)", value: $customPoints, in: 1...29)
-                    .font(.headline.monospacedDigit())
-                    .fixedSize()
+            HStack(spacing: 6) {
+                stepButton("minus") {
+                    customPoints = max(0, customPoints - 1)
+                }
                 Button {
+                    guard customPoints > 0 else { return }
                     peg(points: customPoints, reason: .manual)
+                    customPoints = 0 // the counter zeroes out after the peg advances
                 } label: {
-                    Text("Peg +\(customPoints)")
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                    Text(customPoints > 0 ? "Peg +\(customPoints)" : "Peg")
+                        .frame(maxWidth: .infinity, minHeight: 34)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(TrackStyle.color(selectedTrack))
+                .tint(TrackStyle.color(app.selectedTrack))
+                .disabled(customPoints == 0)
+                stepButton("plus") {
+                    customPoints = min(29, customPoints + 1)
+                }
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Button {
                     app.undo()
                     haptic(.rigid)
                 } label: {
                     Label("Undo", systemImage: "arrow.uturn.backward")
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .frame(maxWidth: .infinity, minHeight: 34)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!(app.session?.game.canUndo ?? false))
 
-                NavigationLink {
-                    HandCalculatorView(pegTarget: selectedTrack)
+                Button {
+                    app.selectedTab = .calc
                 } label: {
                     Label("Count hand", systemImage: "square.grid.3x2")
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .frame(maxWidth: .infinity, minHeight: 34)
                 }
                 .buttonStyle(.bordered)
 
@@ -91,17 +97,25 @@ struct PegPadView: View {
                     haptic(.light)
                 } label: {
                     Label("Next hand", systemImage: "arrow.triangle.2.circlepath")
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .frame(maxWidth: .infinity, minHeight: 34)
                 }
                 .buttonStyle(.bordered)
             }
+            .font(.footnote)
         }
-        .padding(.horizontal)
-        .padding(.bottom, 8)
+    }
+
+    private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .frame(width: 44, height: 34)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel(symbol == "plus" ? "Increase points" : "Decrease points")
     }
 
     private func peg(points: Int, reason: PegReason) {
-        app.peg(track: selectedTrack, points: points, reason: reason)
+        app.peg(track: app.selectedTrack, points: points, reason: reason)
         haptic(.medium)
     }
 

@@ -70,4 +70,28 @@ final class GameStoreTests: XCTestCase {
         XCTAssertNil(store.loadCurrent())
         XCTAssertTrue(store.loadFinished().isEmpty)
     }
+
+    func testLegacyUnversionedFileStillLoads() throws {
+        // 0.x builds wrote the session without a schema wrapper.
+        let game = try sampleGame()
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let legacy = try encoder.encode(LiveSession(game: game))
+        try legacy.write(to: tempDir.appendingPathComponent("current.json"))
+
+        let loaded = store.loadCurrent()
+        XCTAssertEqual(loaded?.game.id, game.id)
+
+        // Re-saving upgrades to the versioned wrapper.
+        try store.saveCurrent(loaded!)
+        let raw = try Data(contentsOf: tempDir.appendingPathComponent("current.json"))
+        let text = String(decoding: raw, as: UTF8.self)
+        XCTAssertTrue(text.contains("schemaVersion"))
+    }
+
+    func testFutureSchemaVersionIsNotMisread() throws {
+        let json = #"{"schemaVersion": 999, "payload": {"anything": true}}"#
+        try Data(json.utf8).write(to: tempDir.appendingPathComponent("current.json"))
+        XCTAssertNil(store.loadCurrent())
+    }
 }

@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 import CribbageEngine
 
+/// Live game screen. Everything fits without scrolling: score cards, board
+/// (flexing to the available space), and the peg pad.
 struct GameView: View {
     @Environment(AppState.self) private var app
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedTrack = 0
+    @AppStorage("scoringHintSeen") private var scoringHintSeen = false
     @State private var showingHistory = false
     @State private var showingAbandonConfirm = false
 
@@ -16,12 +18,10 @@ struct GameView: View {
                 ContentUnavailableView(
                     "No game in progress",
                     systemImage: "rectangle.dashed",
-                    description: Text("Start a new game from the home screen.")
+                    description: Text("Start a new game from the form.")
                 )
             }
         }
-        .navigationTitle("Game")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -36,78 +36,91 @@ struct GameView: View {
             EventHistorySheet()
         }
         .confirmationDialog(
-            "Abandon this game?", isPresented: $showingAbandonConfirm, titleVisibility: .visible
+            "Abandon this game? It won't be saved.",
+            isPresented: $showingAbandonConfirm,
+            titleVisibility: .visible
         ) {
             Button("Abandon", role: .destructive) {
                 app.abandonGame()
-                dismiss()
             }
         }
+        .overlay(alignment: .bottom) {
+            if let toast = app.toast {
+                ToastView(toast: toast)
+                    .padding(.bottom, 4)
+            }
+        }
+        .overlay {
+            if !scoringHintSeen && app.hasLiveGame {
+                ScoringHintOverlay(dismiss: { scoringHintSeen = true })
+            }
+        }
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
     }
 
     @ViewBuilder
     private func content(session: LiveSession) -> some View {
         let game = session.game
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             scoreHeader(game: game, match: session.match)
             BoardView(game: game)
-                .padding(.horizontal)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             if game.isOver {
-                GameOverPanel(dismissGameView: { dismiss() })
+                GameOverPanel()
             } else {
-                PegPadView(selectedTrack: $selectedTrack)
+                PegPadView()
             }
         }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 4)
         .onAppear {
-            if selectedTrack >= game.config.mode.trackCount {
-                selectedTrack = 0
+            if app.selectedTrack >= game.config.mode.trackCount {
+                app.selectedTrack = 0
             }
         }
     }
 
     private func scoreHeader(game: Game, match: MatchState?) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             HStack(spacing: 8) {
                 ForEach(0..<game.config.mode.trackCount, id: \.self) { track in
                     scoreCard(game: game, track: track)
                 }
             }
-            .padding(.horizontal)
             HStack {
-                Label(
-                    "\(game.config.trackName(game.cribTrack))'s crib — \(game.config.playerNames[game.dealerSeat]) deals",
-                    systemImage: "tray.full"
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                Text("\(game.config.playerNames[game.dealerSeat]) deals")
                 if let match {
                     Spacer()
                     Text(matchSummary(match, trackCount: game.config.mode.trackCount))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal)
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 
     private func scoreCard(game: Game, track: Int) -> some View {
-        let selected = selectedTrack == track
+        let selected = app.selectedTrack == track
+        let isCrib = game.cribTrack == track
         return Button {
-            selectedTrack = track
+            app.selectedTrack = track
         } label: {
-            VStack(spacing: 2) {
+            VStack(spacing: 1) {
                 Text(game.config.trackName(track))
                     .font(.caption)
                     .lineLimit(1)
                 Text("\(game.score(ofTrack: track))")
-                    .font(.title2.bold().monospacedDigit())
+                    .font(.title3.bold().monospacedDigit())
+                Text(isCrib ? "crib" : " ")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
+            .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(TrackStyle.color(track).opacity(selected ? 0.25 : 0.08))
+                    .fill(TrackStyle.color(track).opacity(selected ? 0.22 : 0.07))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
@@ -115,6 +128,14 @@ struct GameView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityText(game: game, track: track, isCrib: isCrib))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func accessibilityText(game: Game, track: Int, isCrib: Bool) -> String {
+        var text = "\(game.config.trackName(track)): \(game.score(ofTrack: track)) points"
+        if isCrib { text += ", has the crib" }
+        return text
     }
 
     private func matchSummary(_ match: MatchState, trackCount: Int) -> String {
@@ -123,10 +144,61 @@ struct GameView: View {
     }
 }
 
+/// Transient peg confirmation with one-tap undo.
+struct ToastView: View {
+    @Environment(AppState.self) private var app
+    let toast: ToastMessage
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(toast.text)
+                .font(.subheadline.bold())
+            if toast.undoable {
+                Button("Undo") { app.undo() }
+                    .font(.subheadline.bold())
+                    .underline()
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .background(Capsule().fill(.thinMaterial))
+        .task(id: toast.id) {
+            try? await Task.sleep(nanoseconds: 3_500_000_000)
+            if app.toast?.id == toast.id {
+                app.toast = nil
+            }
+        }
+    }
+}
+
+/// One-time explanation of the scoring flow.
+struct ScoringHintOverlay: View {
+    var dismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How scoring works")
+                    .font(.headline)
+                Text("1. Tap a player's card at the top — the colored outline shows who's pegging.")
+                Text("2. Tap what they scored (15, Pair, Go…) — their peg advances instantly.")
+                Text("3. Use Count hand to tally a full hand from the cards, and Undo to fix any mis-peg.")
+                Button("Got it") { dismiss() }
+                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity)
+            }
+            .font(.subheadline)
+            .padding(20)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)))
+            .padding(28)
+        }
+    }
+}
+
 /// Shown in place of the peg pad once someone reaches the target score.
 struct GameOverPanel: View {
     @Environment(AppState.self) private var app
-    var dismissGameView: () -> Void
 
     var body: some View {
         guard let session = app.session, let winner = session.game.winnerTrack else {
@@ -147,7 +219,7 @@ struct GameOverPanel: View {
             && session.match!.winnerTrack(trackCount: trackCount) == nil
 
         return AnyView(
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 Text("🏆 \(name) wins \(game.score(ofTrack: winner))–\(loserScores(game, winner: winner))")
                     .font(.title3.bold())
                 ForEach(skunks, id: \.self) { line in
@@ -160,15 +232,12 @@ struct GameOverPanel: View {
                         Button("Next game") { app.concludeGame(startNext: true) }
                             .buttonStyle(.borderedProminent)
                     } else {
-                        Button("Finish") {
-                            app.concludeGame(startNext: false)
-                            dismissGameView()
-                        }
-                        .buttonStyle(.borderedProminent)
+                        Button("Finish") { app.concludeGame(startNext: false) }
+                            .buttonStyle(.borderedProminent)
                     }
                 }
             }
-            .padding()
+            .padding(.vertical, 8)
         )
     }
 

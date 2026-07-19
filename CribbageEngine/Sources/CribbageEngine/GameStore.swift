@@ -13,7 +13,18 @@ public struct LiveSession: Codable, Hashable, Sendable {
 
 /// JSON-file persistence for the live session and finished games.
 /// Inject a base directory; the app uses Application Support, tests a temp dir.
+///
+/// Payloads are wrapped with a schema version so future model changes can
+/// migrate old files instead of silently failing to decode them. Files
+/// written before versioning existed (0.x) are read via a legacy fallback.
 public final class GameStore {
+    public static let schemaVersion = 1
+
+    private struct Versioned<Payload: Codable>: Codable {
+        let schemaVersion: Int
+        let payload: Payload
+    }
+
     private let baseURL: URL
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
@@ -31,16 +42,32 @@ public final class GameStore {
         try? FileManager.default.createDirectory(at: finishedURL, withIntermediateDirectories: true)
     }
 
+    // MARK: - Versioned decode
+
+    private func decodePayload<T: Codable>(_ type: T.Type, from data: Data) -> T? {
+        if let versioned = try? decoder.decode(Versioned<T>.self, from: data) {
+            // Migrations chain here as the schema evolves. A payload from a
+            // NEWER schema than this build understands is left untouched.
+            guard versioned.schemaVersion <= Self.schemaVersion else { return nil }
+            return versioned.payload
+        }
+        // Legacy pre-versioning payload written by 0.x builds.
+        return try? decoder.decode(T.self, from: data)
+    }
+
+    private func encodePayload<T: Codable>(_ payload: T) throws -> Data {
+        try encoder.encode(Versioned(schemaVersion: Self.schemaVersion, payload: payload))
+    }
+
     // MARK: - Live session
 
     public func saveCurrent(_ session: LiveSession) throws {
-        let data = try encoder.encode(session)
-        try data.write(to: currentURL, options: .atomic)
+        try encodePayload(session).write(to: currentURL, options: .atomic)
     }
 
     public func loadCurrent() -> LiveSession? {
         guard let data = try? Data(contentsOf: currentURL) else { return nil }
-        return try? decoder.decode(LiveSession.self, from: data)
+        return decodePayload(LiveSession.self, from: data)
     }
 
     public func clearCurrent() {
@@ -51,8 +78,7 @@ public final class GameStore {
 
     public func archive(_ game: Game) throws {
         let url = finishedURL.appendingPathComponent("\(game.id.uuidString).json")
-        let data = try encoder.encode(game)
-        try data.write(to: url, options: .atomic)
+        try encodePayload(game).write(to: url, options: .atomic)
     }
 
     /// All finished games, most recent first.
@@ -64,7 +90,7 @@ public final class GameStore {
             .filter { $0.pathExtension == "json" }
             .compactMap { url in
                 guard let data = try? Data(contentsOf: url) else { return nil }
-                return try? decoder.decode(Game.self, from: data)
+                return decodePayload(Game.self, from: data)
             }
             .sorted { ($0.completedAt ?? $0.createdAt) > ($1.completedAt ?? $1.createdAt) }
     }

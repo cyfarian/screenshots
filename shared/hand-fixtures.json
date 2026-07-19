@@ -1,0 +1,3515 @@
+{
+ "version": 1,
+ "fixtures": [
+  {
+   "name": "perfect 29",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 29
+  },
+  {
+   "name": "zero hand",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 0
+  },
+  {
+   "name": "double double run 24",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 24
+  },
+  {
+   "name": "triple run 21",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "clubs"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 4,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 21
+  },
+  {
+   "name": "run of five 9",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 9
+  },
+  {
+   "name": "flush 4",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "flush 4 in crib scores 0 flush",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "flush 5 in crib",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 9
+  },
+  {
+   "name": "nobs",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 3
+  },
+  {
+   "name": "no wraparound run",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 0",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 14
+  },
+  {
+   "name": "random 1",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 2",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 3",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 4",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 4,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 5",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 9
+  },
+  {
+   "name": "random 6",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 7",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 8",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 9",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 10",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 7,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 11",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 12",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 3
+  },
+  {
+   "name": "random 13",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 0
+  },
+  {
+   "name": "random 14",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "hearts"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 4,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 15",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 16",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 17",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "clubs"
+    },
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 18",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 19",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 20",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 21",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 22",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 23",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 24",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 25",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "clubs"
+    },
+    {
+     "rank": 10,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 26",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 4,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 27",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 28",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 29",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 0
+  },
+  {
+   "name": "random 30",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 10,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 9
+  },
+  {
+   "name": "random 31",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 32",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 0
+  },
+  {
+   "name": "random 33",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 34",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 35",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 36",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 0
+  },
+  {
+   "name": "random 37",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 3
+  },
+  {
+   "name": "random 38",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 24
+  },
+  {
+   "name": "random 39",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 40",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 41",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 42",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 1,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 43",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 3,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 44",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "clubs"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 3,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 45",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 46",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 47",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 48",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 49",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 50",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 51",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 52",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 3,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 12
+  },
+  {
+   "name": "random 53",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 54",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 55",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 56",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 9
+  },
+  {
+   "name": "random 57",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 58",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 59",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 7,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 60",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 61",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 62",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 63",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 64",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 65",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "clubs"
+    },
+    {
+     "rank": 1,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 66",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 3,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 67",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 68",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 4,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 69",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 70",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 71",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 72",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 73",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 74",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "hearts"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 75",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "spades"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 76",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 77",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 78",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 3
+  },
+  {
+   "name": "random 79",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 7,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 12
+  },
+  {
+   "name": "random 80",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 3,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 81",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 7,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 82",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 83",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 8
+  },
+  {
+   "name": "random 84",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 1
+  },
+  {
+   "name": "random 85",
+   "hand": [
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    },
+    {
+     "rank": 10,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 86",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    },
+    {
+     "rank": 7,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 87",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 10,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 88",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 89",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 3,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 90",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 13,
+     "suit": "spades"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 91",
+   "hand": [
+    {
+     "rank": 8,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 6,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 92",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "clubs"
+    },
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 10,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 93",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "spades"
+    },
+    {
+     "rank": 5,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "clubs"
+   },
+   "isCrib": true,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 94",
+   "hand": [
+    {
+     "rank": 3,
+     "suit": "spades"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 95",
+   "hand": [
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 96",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 5,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 97",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 12,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 98",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 13,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 7,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 0
+  },
+  {
+   "name": "random 99",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 100",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 4,
+     "suit": "clubs"
+    },
+    {
+     "rank": 6,
+     "suit": "spades"
+    },
+    {
+     "rank": 1,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 101",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "spades"
+   },
+   "isCrib": true,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 102",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "hearts"
+    },
+    {
+     "rank": 5,
+     "suit": "clubs"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 103",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 104",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 3,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 11,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 105",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 106",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "clubs"
+    },
+    {
+     "rank": 3,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 11,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 10
+  },
+  {
+   "name": "random 107",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 13,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 4,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 4
+  },
+  {
+   "name": "random 108",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 109",
+   "hand": [
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 11,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 110",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  },
+  {
+   "name": "random 111",
+   "hand": [
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 12,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 12,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 1,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 112",
+   "hand": [
+    {
+     "rank": 6,
+     "suit": "hearts"
+    },
+    {
+     "rank": 7,
+     "suit": "spades"
+    },
+    {
+     "rank": 2,
+     "suit": "hearts"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 12,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 113",
+   "hand": [
+    {
+     "rank": 1,
+     "suit": "spades"
+    },
+    {
+     "rank": 13,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    },
+    {
+     "rank": 11,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 6,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 114",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 10,
+     "suit": "hearts"
+    },
+    {
+     "rank": 3,
+     "suit": "spades"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "hearts"
+   },
+   "isCrib": false,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 115",
+   "hand": [
+    {
+     "rank": 4,
+     "suit": "spades"
+    },
+    {
+     "rank": 6,
+     "suit": "clubs"
+    },
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 7,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 8,
+    "suit": "hearts"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 116",
+   "hand": [
+    {
+     "rank": 5,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 5,
+     "suit": "spades"
+    },
+    {
+     "rank": 3,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 1,
+     "suit": "diamonds"
+    }
+   ],
+   "starter": {
+    "rank": 2,
+    "suit": "diamonds"
+   },
+   "isCrib": true,
+   "expectedTotal": 7
+  },
+  {
+   "name": "random 117",
+   "hand": [
+    {
+     "rank": 11,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 9,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 13,
+    "suit": "spades"
+   },
+   "isCrib": false,
+   "expectedTotal": 5
+  },
+  {
+   "name": "random 118",
+   "hand": [
+    {
+     "rank": 10,
+     "suit": "clubs"
+    },
+    {
+     "rank": 12,
+     "suit": "diamonds"
+    },
+    {
+     "rank": 4,
+     "suit": "hearts"
+    },
+    {
+     "rank": 8,
+     "suit": "hearts"
+    }
+   ],
+   "starter": {
+    "rank": 3,
+    "suit": "clubs"
+   },
+   "isCrib": false,
+   "expectedTotal": 2
+  },
+  {
+   "name": "random 119",
+   "hand": [
+    {
+     "rank": 2,
+     "suit": "spades"
+    },
+    {
+     "rank": 9,
+     "suit": "hearts"
+    },
+    {
+     "rank": 9,
+     "suit": "spades"
+    },
+    {
+     "rank": 13,
+     "suit": "clubs"
+    }
+   ],
+   "starter": {
+    "rank": 9,
+    "suit": "diamonds"
+   },
+   "isCrib": false,
+   "expectedTotal": 6
+  }
+ ]
+}

@@ -17,88 +17,80 @@
 </head>
 <body>
 <header id="topbar">
-  <button id="nav-back" class="ghost" hidden>‹ Back</button>
   <h1 id="title">Cribbage</h1>
-  <span id="topbar-spacer"></span>
 </header>
 
 <main>
-  <!-- ============================================================ Home -->
-  <section id="view-home">
-    <div id="resume-card" class="card tappable" hidden>
-      <div class="card-title">▶ Resume Game</div>
-      <div id="resume-summary" class="muted"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">New Game</div>
-      <label class="field">
-        <span>Players</span>
-        <select id="ng-mode">
-          <option value="twoPlayer">2 Players</option>
-          <option value="threePlayer">3 Players</option>
-          <option value="fourPlayerPartners">4 Players (Teams)</option>
-        </select>
-      </label>
-      <div id="ng-names"></div>
-      <div id="ng-teams" hidden>
-        <label class="field"><span>Team 1</span><input id="ng-team-0" placeholder="Optional"></label>
-        <label class="field"><span>Team 2</span><input id="ng-team-1" placeholder="Optional"></label>
-      </div>
-      <label class="field">
-        <span>First dealer</span>
-        <select id="ng-dealer"></select>
-      </label>
-      <button id="ng-cut" class="ghost small">🎲 Cut for deal (random)</button>
-      <label class="field toggle"><span>Muggins</span><input type="checkbox" id="ng-muggins"></label>
-      <label class="field toggle"><span>Play a match</span><input type="checkbox" id="ng-match"></label>
-      <div id="ng-match-opts" hidden>
+  <!-- ====================================================== Game tab -->
+  <section id="view-game">
+    <!-- Setup (no live game) -->
+    <div id="game-setup">
+      <div class="card">
+        <div class="card-title">New Game</div>
         <label class="field">
-          <span>Length</span>
-          <select id="ng-bestof">
-            <option value="3">Best of 3</option>
-            <option value="5">Best of 5</option>
-            <option value="7">Best of 7</option>
+          <span>Players</span>
+          <select id="ng-mode" aria-label="Number of players">
+            <option value="twoPlayer">2 Players</option>
+            <option value="threePlayer">3 Players</option>
+            <option value="fourPlayerPartners">4 Players (Teams)</option>
           </select>
         </label>
-        <label class="field toggle"><span>Skunks count double</span><input type="checkbox" id="ng-skunkx"></label>
+        <div id="ng-names"></div>
+        <div id="ng-teams" hidden>
+          <label class="field"><span>Team 1</span><input id="ng-team-0" placeholder="Optional"></label>
+          <label class="field"><span>Team 2</span><input id="ng-team-1" placeholder="Optional"></label>
+        </div>
+        <label class="field">
+          <span>First dealer</span>
+          <select id="ng-dealer" aria-label="First dealer"></select>
+        </label>
+        <button id="ng-cut" class="ghost small">🎲 Cut for deal (random)</button>
+        <label class="field toggle"><span>Muggins</span><input type="checkbox" id="ng-muggins"></label>
+        <label class="field toggle"><span>Play a match</span><input type="checkbox" id="ng-match"></label>
+        <div id="ng-match-opts" hidden>
+          <label class="field">
+            <span>Length</span>
+            <select id="ng-bestof">
+              <option value="3">Best of 3</option>
+              <option value="5">Best of 5</option>
+              <option value="7">Best of 7</option>
+            </select>
+          </label>
+          <label class="field toggle"><span>Skunks count double</span><input type="checkbox" id="ng-skunkx"></label>
+        </div>
+        <button id="ng-start" class="primary">Start Game</button>
       </div>
-      <button id="ng-start" class="primary">Start Game</button>
     </div>
 
-    <div class="card">
-      <div class="card-title">Tools</div>
-      <button class="row-link" data-nav="calc">🧮 Hand Calculator</button>
-      <button class="row-link" data-nav="history">📊 History &amp; Stats</button>
-      <button class="row-link" data-nav="settings">⚙️ Settings</button>
-    </div>
-  </section>
-
-  <!-- ============================================================ Game -->
-  <section id="view-game" hidden>
-    <div id="score-cards"></div>
-    <div id="game-meta" class="muted"></div>
-    <canvas id="board"></canvas>
-
-    <div id="game-over" class="card" hidden></div>
-
-    <div id="peg-pad">
-      <div id="quick-grid"></div>
-      <div id="custom-row">
-        <button id="custom-minus" class="stepper">−</button>
-        <button id="custom-peg" class="primary">Peg +1</button>
-        <button id="custom-plus" class="stepper">+</button>
+    <!-- Live game: fills the tab, nothing scrolls -->
+    <div id="game-live" hidden>
+      <div id="score-cards" role="tablist" aria-label="Select who pegs"></div>
+      <div id="game-meta">
+        <span id="meta-text" class="muted"></span>
+        <span id="meta-actions">
+          <button id="btn-events" class="icon-btn" aria-label="Event history">📜</button>
+          <button id="btn-newgame" class="icon-btn" aria-label="End or restart game">✕</button>
+        </span>
       </div>
-      <div id="action-row">
-        <button id="btn-undo">↩︎ Undo</button>
-        <button id="btn-count" data-nav="calc">🃏 Count hand</button>
-        <button id="btn-nexthand">🔄 Next hand</button>
+      <div id="board-wrap">
+        <canvas id="board" role="img"></canvas>
       </div>
-      <details id="events-panel">
-        <summary>Event history</summary>
-        <ul id="events-list"></ul>
-      </details>
-      <button id="btn-abandon" class="ghost small danger">Abandon game</button>
+
+      <div id="game-over" class="card" hidden></div>
+
+      <div id="peg-pad">
+        <div id="quick-grid"></div>
+        <div id="custom-row">
+          <button id="custom-minus" class="stepper" aria-label="Decrease points">−</button>
+          <button id="custom-peg" class="primary" disabled>Peg</button>
+          <button id="custom-plus" class="stepper" aria-label="Increase points">+</button>
+        </div>
+        <div id="action-row">
+          <button id="btn-undo">↩︎ Undo</button>
+          <button id="btn-count">🃏 Count hand</button>
+          <button id="btn-nexthand">🔄 Next hand</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -127,6 +119,17 @@
   <!-- ======================================================== Settings -->
   <section id="view-settings" hidden>
     <div class="card">
+      <div class="card-title">Appearance</div>
+      <label class="field">
+        <span>Peg colors</span>
+        <select id="set-palette">
+          <option value="classic">Classic (red / blue)</option>
+          <option value="colorblind">Color-blind friendly</option>
+          <option value="modern">Violet / teal</option>
+        </select>
+      </label>
+    </div>
+    <div class="card">
       <div class="card-title">New game defaults</div>
       <label class="field toggle"><span>Muggins</span><input type="checkbox" id="set-muggins"></label>
       <label class="field toggle"><span>Skunks count double in matches</span><input type="checkbox" id="set-skunkx"></label>
@@ -134,11 +137,54 @@
     <div class="card">
       <div class="card-title">About</div>
       <p class="muted">Scores derive from the full peg history, so Undo can always rewind a mis-peg.
-      Games and stats are saved on this device. Works offline once loaded.</p>
+      Games and stats are saved on this device. Works offline once loaded. The screen stays awake
+      during a live game.</p>
       <p class="muted" id="version-line"></p>
     </div>
   </section>
 </main>
+
+<nav id="tabbar" aria-label="Sections">
+  <button data-tab="game" class="tab active" aria-label="Game"><span>🎯</span>Game</button>
+  <button data-tab="calc" class="tab" aria-label="Hand calculator"><span>🃏</span>Cards</button>
+  <button data-tab="history" class="tab" aria-label="History and stats"><span>📊</span>History</button>
+  <button data-tab="settings" class="tab" aria-label="Settings"><span>⚙️</span>Settings</button>
+</nav>
+
+<div id="toast" hidden>
+  <span id="toast-text"></span>
+  <button id="toast-undo">Undo</button>
+</div>
+
+<div id="events-modal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <span class="card-title">Events</span>
+      <button id="events-close" class="ghost">Done</button>
+    </div>
+    <ul id="events-list"></ul>
+  </div>
+</div>
+
+<div id="newgame-modal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="card-title">This game?</div>
+    <button id="nm-abandon" class="danger">Abandon game (not saved)</button>
+    <button id="nm-cancel" class="ghost">Keep playing</button>
+  </div>
+</div>
+
+<div id="hint-overlay" class="modal" hidden>
+  <div class="modal-card">
+    <div class="card-title">How scoring works</div>
+    <p>1. Tap a player's card at the top — the colored outline shows who's pegging.</p>
+    <p>2. Tap what they scored (15, Pair, Go…) — their peg advances instantly.</p>
+    <p>3. Use <b>🃏 Count hand</b> to tally a full hand from the cards, and <b>↩︎ Undo</b> to fix any mis-peg.</p>
+    <button id="hint-done" class="primary">Got it</button>
+  </div>
+</div>
+
+<div id="sr-announce" class="sr-only" aria-live="polite"></div>
 
 <script type="module" src="app.js"></script>
 </body>

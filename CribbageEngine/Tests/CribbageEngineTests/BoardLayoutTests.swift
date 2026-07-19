@@ -76,6 +76,27 @@ final class BoardLayoutTests: XCTestCase {
         }
     }
 
+    func testFractionalPositionsInterpolateAlongPath() {
+        let layout = BoardLayout(trackCount: 2)
+        // Halfway points sit between their neighbouring holes.
+        for hole in stride(from: 0, to: 120, by: 11) {
+            let a = layout.position(hole: hole, track: 0)
+            let b = layout.position(hole: hole + 1, track: 0)
+            let mid = layout.position(atDistance: Double(hole) + 0.5, track: 0)
+            let straightMid = ((a.x + b.x) / 2, (a.y + b.y) / 2)
+            // On arcs the path midpoint bows away from the chord slightly;
+            // it must still be close and inside the board.
+            XCTAssertLessThan(hypot(mid.0 - straightMid.0, mid.1 - straightMid.1), 0.3)
+        }
+        // Clamping
+        let start = layout.position(atDistance: -5, track: 0)
+        let zero = layout.position(hole: 0, track: 0)
+        XCTAssertEqual(start.x, zero.x, accuracy: 0.0001)
+        let over = layout.position(atDistance: 999, track: 0)
+        let end = layout.position(hole: 121, track: 0)
+        XCTAssertEqual(over.x, end.x, accuracy: 0.0001)
+    }
+
     func testAspectRatioRoughlySquareForTwoTracks() {
         let layout = BoardLayout(trackCount: 2)
         XCTAssertGreaterThan(layout.aspectRatio, 0.6)

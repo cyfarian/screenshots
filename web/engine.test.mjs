@@ -217,3 +217,12 @@ test("board layout geometry", () => {
   assert.ok(start.x < lay.size.width * 0.3 && start.y > lay.size.height * 0.55);
   assert.ok(finish.x > lay.size.width * 0.7 && finish.y > lay.size.height * 0.55);
 });
+
+test("shared fixtures (same file the Swift engine tests use)", async () => {
+  const fs = await import("node:fs");
+  const data = JSON.parse(fs.readFileSync(new URL("../shared/hand-fixtures.json", import.meta.url)));
+  for (const f of data.fixtures) {
+    const total = scoreHand(f.hand, f.starter, f.isCrib).total;
+    assert.equal(total, f.expectedTotal, f.name);
+  }
+});

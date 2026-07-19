@@ -1,12 +1,20 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage("palette") private var palette = "classic"
     @AppStorage("defaultMuggins") private var defaultMuggins = false
     @AppStorage("defaultSkunksCountExtra") private var defaultSkunksCountExtra = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                Picker("Peg colors", selection: $palette) {
+                    Text("Classic (red / blue)").tag("classic")
+                    Text("Color-blind friendly").tag("colorblind")
+                    Text("Violet / teal").tag("modern")
+                }
+            }
             Section("New game defaults") {
                 Toggle("Muggins", isOn: $defaultMuggins)
                 Toggle("Skunks count double in matches", isOn: $defaultSkunksCountExtra)
@@ -16,7 +24,7 @@ struct SettingsView: View {
             }
             Section("About") {
                 LabeledContent("Version", value: Bundle.main.shortVersion)
-                Text("Scores derive from the full peg history, so Undo can always rewind a mis-peg.")
+                Text("Scores derive from the full peg history, so Undo can always rewind a mis-peg. The screen stays awake during a live game.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

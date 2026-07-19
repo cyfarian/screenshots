@@ -1,19 +1,16 @@
 import SwiftUI
 import CribbageEngine
 
-/// Pick 4 hand cards + a starter and see the itemized count. When opened from
-/// a live game (`pegTarget` set) the total can be pegged directly, including
-/// the muggins flow for under-claimed hands.
+/// Pick 4 hand cards + a starter and see the itemized count. While a game is
+/// live the total can be pegged straight to any track, including the muggins
+/// flow for under-claimed hands.
 struct HandCalculatorView: View {
     @Environment(AppState.self) private var app
-    @Environment(\.dismiss) private var dismiss
-
-    /// Track to peg for, when opened from a game. Nil = standalone calculator.
-    let pegTarget: Int?
 
     @State private var selection: [Card] = []
     @State private var isCrib = false
     @State private var claimedPoints: Int?
+    @State private var pegBusy = false
 
     private var hand: [Card] { Array(selection.prefix(4)) }
     private var starter: Card? { selection.count >= 5 ? selection[4] : nil }
@@ -48,13 +45,16 @@ struct HandCalculatorView: View {
                             .font(.footnote)
                     }
                 }
-                if let track = pegTarget, let game = app.session?.game, !game.isOver {
-                    pegSection(breakdown: breakdown, track: track, game: game)
+                if let game = app.session?.game, !game.isOver {
+                    pegSection(breakdown: breakdown, game: game)
                 }
             }
         }
         .navigationTitle("Hand Calculator")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: selection) {
+            claimedPoints = nil
+        }
     }
 
     private var statusRow: some View {
@@ -103,21 +103,42 @@ struct HandCalculatorView: View {
     }
 
     @ViewBuilder
-    private func pegSection(breakdown: ScoreBreakdown, track: Int, game: Game) -> some View {
-        let name = game.config.trackName(track)
-        let mugginsOn = game.config.mugginsEnabled
+    private func pegSection(breakdown: ScoreBreakdown, game: Game) -> some View {
+        let trackCount = game.config.mode.trackCount
+        let track = min(app.selectedTrack, trackCount - 1)
+        let trackName = game.config.trackName(track)
         Section("Peg it") {
+            // Who pegs: same selection as the game screen's score cards.
+            HStack(spacing: 6) {
+                ForEach(0..<trackCount, id: \.self) { t in
+                    Button {
+                        app.selectedTrack = t
+                    } label: {
+                        Text(game.config.trackName(t))
+                            .font(.footnote.bold())
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, minHeight: 30)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(TrackStyle.color(t))
+                    .opacity(t == track ? 1 : 0.45)
+                    .accessibilityAddTraits(t == track ? .isSelected : [])
+                }
+            }
+
             Button {
-                let reason: PegReason = isCrib ? .cribCount : .handCount
-                app.peg(track: track, points: breakdown.total, reason: reason, breakdown: breakdown)
-                dismiss()
+                guardedPeg {
+                    let reason: PegReason = isCrib ? .cribCount : .handCount
+                    app.peg(track: track, points: breakdown.total, reason: reason, breakdown: breakdown)
+                    finishPeg()
+                }
             } label: {
-                Label("Peg \(breakdown.total) for \(name)", systemImage: "checkmark.circle.fill")
+                Label("Peg \(breakdown.total) for \(trackName)", systemImage: "checkmark.circle.fill")
                     .font(.headline)
             }
-            .disabled(breakdown.total == 0)
+            .disabled(breakdown.total == 0 || pegBusy)
 
-            if mugginsOn && breakdown.total > 0 {
+            if game.config.mugginsEnabled && breakdown.total > 0 {
                 mugginsControls(breakdown: breakdown, track: track, game: game)
             }
         }
@@ -136,24 +157,39 @@ struct HandCalculatorView: View {
         )
         if claimed < breakdown.total {
             let missed = breakdown.total - claimed
-            if claimed > 0 {
-                Button("Peg claimed \(claimed) for \(name(of: track, in: game))") {
-                    let reason: PegReason = isCrib ? .cribCount : .handCount
-                    app.peg(track: track, points: claimed, reason: reason, breakdown: breakdown)
-                }
-            }
             ForEach(otherTracks(than: track, in: game), id: \.self) { other in
-                Button("Muggins! \(name(of: other, in: game)) takes the missed \(missed)") {
-                    app.peg(track: other, points: missed, reason: .muggins)
-                    dismiss()
+                Button("Muggins! \(game.config.trackName(other)) takes the missed \(missed)") {
+                    guardedPeg {
+                        let reason: PegReason = isCrib ? .cribCount : .handCount
+                        if claimed > 0 {
+                            app.peg(track: track, points: claimed, reason: reason, breakdown: breakdown)
+                        }
+                        app.peg(track: other, points: missed, reason: .muggins)
+                        finishPeg()
+                    }
                 }
                 .foregroundStyle(.orange)
+                .disabled(pegBusy)
             }
         }
     }
 
-    private func name(of track: Int, in game: Game) -> String {
-        game.config.trackName(track)
+    /// One peg action per breakdown — blocks accidental double-taps.
+    private func guardedPeg(_ action: () -> Void) {
+        guard !pegBusy else { return }
+        pegBusy = true
+        action()
+        Task {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            pegBusy = false
+        }
+    }
+
+    private func finishPeg() {
+        selection.removeAll()
+        claimedPoints = nil
+        isCrib = false
+        app.selectedTab = .game
     }
 
     private func otherTracks(than track: Int, in game: Game) -> [Int] {

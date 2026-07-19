@@ -27,6 +27,8 @@ later (the scoring engine is already a standalone module).
 |------|------------|
 | `CribbageEngine/` | Pure-Swift package: scoring rules, game state, board geometry, persistence. No UI imports — tests run on Linux. |
 | `App/` | SwiftUI app layer (iOS 17+). |
+| `web/` | Installable web app (PWA) with the same features, deployed to GitHub Pages. `web/engine.js` mirrors the Swift engine; both are verified against `shared/hand-fixtures.json`. `web/ui.test.mjs` drives the UI end-to-end in headless Chromium. |
+| `shared/` | Cross-implementation test fixtures. |
 | `project.yml` | [XcodeGen](https://github.com/yonaskolb/XcodeGen) spec; the Xcode project is generated on CI, never committed. |
 | `.github/workflows/engine-tests.yml` | Runs `swift test` on every push (free Linux runner). |
 | `.github/workflows/testflight.yml` | Builds, signs, and uploads to TestFlight on a cloud Mac — no local Mac needed. |

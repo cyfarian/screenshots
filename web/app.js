@@ -2,94 +2,167 @@
 import * as E from "./engine.js";
 
 const $ = (id) => document.getElementById(id);
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
+const SCHEMA_VERSION = 1;
 
 // ------------------------------------------------------------------- Storage
+// Values are wrapped as {v, data}. Legacy (unwrapped) values from 1.0.x are
+// migrated transparently on load.
 
 const store = {
   load(key, fallback) {
     try {
       const raw = localStorage.getItem("cribbage." + key);
-      return raw ? JSON.parse(raw) : fallback;
+      if (raw === null) return fallback;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && "v" in parsed && "data" in parsed) {
+        return migrate(parsed.v, parsed.data) ?? fallback;
+      }
+      return migrate(0, parsed) ?? fallback; // pre-versioning payload
     } catch {
       return fallback;
     }
   },
   save(key, value) {
-    localStorage.setItem("cribbage." + key, JSON.stringify(value));
+    try {
+      localStorage.setItem("cribbage." + key, JSON.stringify({ v: SCHEMA_VERSION, data: value }));
+    } catch (err) {
+      showToast("⚠️ Couldn't save — storage full?", false);
+    }
   },
   remove(key) {
     localStorage.removeItem("cribbage." + key);
   },
 };
 
+function migrate(fromVersion, data) {
+  // v0 -> v1: identical shape, just unwrapped. Future migrations chain here.
+  return data;
+}
+
 let session = store.load("session", null); // { game, match|null }
 let finished = store.load("finished", []); // [game]
-let settings = store.load("settings", { muggins: false, skunkx: false });
+let settings = store.load("settings", {
+  muggins: false, skunkx: false, palette: "classic", hintSeen: false,
+});
 
 function persistSession() {
   if (session) store.save("session", session);
   else store.remove("session");
 }
+function persistSettings() {
+  store.save("settings", settings);
+}
 
-// ---------------------------------------------------------------- Navigation
+// ------------------------------------------------------------------ Palettes
 
-const VIEWS = ["home", "game", "calc", "history", "settings"];
-const TITLES = { home: "Cribbage", game: "Game", calc: "Hand Calculator", history: "History", settings: "Settings" };
-let navStack = ["home"];
+const PALETTES = {
+  classic: ["#c62f2b", "#2757c8", "#1d8a44"],
+  colorblind: ["#0072b2", "#e69f00", "#009e73"], // Okabe–Ito: safe for common CVD
+  modern: ["#7c4dff", "#00897b", "#f4511e"],
+};
+
+function applyPalette() {
+  const colors = PALETTES[settings.palette] ?? PALETTES.classic;
+  colors.forEach((c, i) => document.documentElement.style.setProperty(`--track${i}`, c));
+}
+function trackColor(t) {
+  return (PALETTES[settings.palette] ?? PALETTES.classic)[t % 3];
+}
+
+// ------------------------------------------------------------------- Tabs
+
+const TABS = ["game", "calc", "history", "settings"];
+const TITLES = { game: "Cribbage", calc: "Hand Calculator", history: "History", settings: "Settings" };
+let currentTab = "game";
 let selectedTrack = 0;
-let calcPegTarget = null; // track index when opened from a game
 
-function show(view, { fromGame = false } = {}) {
-  if (view === "calc") calcPegTarget = fromGame ? selectedTrack : null;
-  navStack.push(view);
-  render();
+function switchTab(tab) {
+  currentTab = tab;
+  for (const t of TABS) $("view-" + t).hidden = t !== tab;
+  document.querySelectorAll("#tabbar .tab").forEach((b) =>
+    b.classList.toggle("active", b.dataset.tab === tab)
+  );
+  $("title").textContent = TITLES[tab];
+  if (tab === "game") renderGameTab();
+  if (tab === "calc") renderCalc();
+  if (tab === "history") renderHistory();
+  if (tab === "settings") renderSettings();
+  updateWakeLock();
 }
 
-function back() {
-  if (navStack.length > 1) navStack.pop();
-  render();
-}
-
-$("nav-back").addEventListener("click", back);
-document.querySelectorAll("[data-nav]").forEach((el) =>
-  el.addEventListener("click", () => show(el.dataset.nav, { fromGame: el.id === "btn-count" }))
+document.querySelectorAll("#tabbar .tab").forEach((b) =>
+  b.addEventListener("click", () => switchTab(b.dataset.tab))
 );
 
-// ------------------------------------------------------------------- Render
+// ------------------------------------------------------------------ Wake lock
+// Keep the screen on while a game is live (the phone sits on the table).
 
-function render() {
-  const view = navStack[navStack.length - 1];
-  for (const v of VIEWS) $("view-" + v).hidden = v !== view;
-  $("title").textContent = TITLES[view];
-  $("nav-back").hidden = navStack.length <= 1;
-  if (view === "home") renderHome();
-  if (view === "game") renderGame();
-  if (view === "calc") renderCalc();
-  if (view === "history") renderHistory();
-  if (view === "settings") renderSettings();
-}
-
-// ---------------------------------------------------------------------- Home
-
-function renderHome() {
-  const resume = $("resume-card");
-  if (session) {
-    resume.hidden = false;
-    const g = session.game;
-    const tc = E.MODES[g.config.mode].trackCount;
-    const parts = [];
-    for (let t = 0; t < tc; t++) parts.push(`${E.trackName(g.config, t)} ${E.trackScore(g, t)}`);
-    let line = parts.join("  •  ");
-    if (session.match) line += `  ·  game ${session.match.results.length + 1} of best-of-${session.match.config.bestOf}`;
-    $("resume-summary").textContent = line;
-  } else {
-    resume.hidden = true;
+let wakeLock = null;
+async function updateWakeLock() {
+  const want = currentTab === "game" && !!session && "wakeLock" in navigator;
+  if (want && !wakeLock) {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } catch { /* low battery mode etc. — not fatal */ }
+  } else if (!want && wakeLock) {
+    try { await wakeLock.release(); } catch {}
+    wakeLock = null;
   }
-  syncNewGameForm();
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") updateWakeLock();
+});
+
+// --------------------------------------------------------------------- Toast
+
+let toastTimer = null;
+function showToast(text, undoable = true) {
+  $("toast-text").textContent = text;
+  $("toast-undo").hidden = !undoable;
+  $("toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").hidden = true; }, 3500);
+}
+$("toast-undo").addEventListener("click", () => {
+  if (session) {
+    E.undo(session.game);
+    persistSession();
+    renderGameTab();
+  }
+  $("toast").hidden = true;
+});
+
+function announce(text) {
+  $("sr-announce").textContent = text;
 }
 
-$("resume-card").addEventListener("click", () => show("game"));
+// ------------------------------------------------------------------ Game tab
+
+function renderGameTab() {
+  const live = !!session;
+  $("game-setup").hidden = live;
+  $("game-live").hidden = !live;
+  if (live) {
+    renderLiveGame();
+    maybeShowHint();
+  } else {
+    syncNewGameForm();
+  }
+  updateWakeLock();
+}
+
+function maybeShowHint() {
+  if (!settings.hintSeen) $("hint-overlay").hidden = false;
+}
+$("hint-done").addEventListener("click", () => {
+  settings.hintSeen = true;
+  persistSettings();
+  $("hint-overlay").hidden = true;
+});
+
+// --- New game form ---
 
 function syncNewGameForm() {
   const mode = $("ng-mode").value;
@@ -149,12 +222,13 @@ $("ng-start").addEventListener("click", () => {
     : null;
   session = { game, match };
   selectedTrack = 0;
+  customPoints = 0;
+  animState = null;
   persistSession();
-  navStack = ["home"];
-  show("game");
+  renderGameTab();
 });
 
-// ---------------------------------------------------------------------- Game
+// --- Live game ---
 
 const QUICK = [
   { label: "15", pts: 2, reason: "fifteen" },
@@ -168,18 +242,9 @@ const QUICK = [
   { label: "Nobs", pts: 1, reason: "nobs" },
   { label: "Heels", pts: 2, reason: "heels" },
 ];
-let customPoints = 1;
+let customPoints = 0;
 
-function trackColor(t) {
-  return getComputedStyle(document.documentElement).getPropertyValue(`--track${t}`).trim();
-}
-
-function renderGame() {
-  if (!session) {
-    navStack = ["home"];
-    render();
-    return;
-  }
+function renderLiveGame() {
   const g = session.game;
   const tc = E.MODES[g.config.mode].trackCount;
   if (selectedTrack >= tc) selectedTrack = 0;
@@ -189,31 +254,36 @@ function renderGame() {
   cards.innerHTML = "";
   const crib = E.cribTrack(g);
   for (let t = 0; t < tc; t++) {
-    const el = document.createElement("div");
+    const el = document.createElement("button");
     el.className = "score-card";
     const selected = t === selectedTrack;
+    el.setAttribute("role", "tab");
+    el.setAttribute("aria-selected", selected ? "true" : "false");
+    el.setAttribute(
+      "aria-label",
+      `${E.trackName(g.config, t)}: ${E.trackScore(g, t)} points${t === crib ? ", has the crib" : ""}`
+    );
     el.style.borderColor = selected ? trackColor(t) : "transparent";
     el.style.background = selected ? `color-mix(in srgb, ${trackColor(t)} 14%, var(--card))` : "";
     el.innerHTML = `
       <div class="name">${esc(E.trackName(g.config, t))}</div>
       <div class="pts" style="color:${trackColor(t)}">${E.trackScore(g, t)}</div>
       <div class="crib-badge">${t === crib ? "🂠 crib" : "&nbsp;"}</div>`;
-    el.addEventListener("click", () => { selectedTrack = t; renderGame(); });
+    el.addEventListener("click", () => { selectedTrack = t; renderLiveGame(); });
     cards.appendChild(el);
   }
 
   // Meta line
   const dealer = g.config.playerNames[E.dealerSeat(g)];
-  let meta = `<span>${esc(dealer)} deals</span>`;
+  let meta = `${esc(dealer)} deals`;
   if (session.match) {
     const pts = [...Array(tc).keys()].map((t) => E.matchPoints(session.match, t));
-    meta += `<span>Match ${pts.join("–")} · best of ${session.match.config.bestOf}</span>`;
+    meta += ` · match ${pts.join("–")} (best of ${session.match.config.bestOf})`;
   }
-  $("game-meta").innerHTML = meta;
+  $("meta-text").textContent = meta;
 
-  drawBoard(g);
+  scheduleBoardDraw(g);
 
-  // Game over vs peg pad
   const over = E.isOver(g);
   $("game-over").hidden = !over;
   $("peg-pad").hidden = over;
@@ -227,26 +297,21 @@ function renderPegPad(g) {
   for (const q of QUICK) {
     const b = document.createElement("button");
     b.innerHTML = `<span class="q-label">${q.label}</span><span class="q-pts">+${q.pts}</span>`;
+    b.setAttribute("aria-label", `${q.label}, ${q.pts} point${q.pts > 1 ? "s" : ""}`);
     b.style.borderColor = trackColor(selectedTrack);
     b.addEventListener("click", () => doPeg(selectedTrack, q.pts, q.reason));
     grid.appendChild(b);
   }
-  $("custom-peg").textContent = `Peg +${customPoints}`;
-  $("custom-peg").style.background = trackColor(selectedTrack);
-  $("custom-peg").style.borderColor = trackColor(selectedTrack);
+  syncCustomButton();
   $("btn-undo").disabled = g.events.length === 0;
+}
 
-  const list = $("events-list");
-  list.innerHTML = "";
-  for (const e of [...g.events].reverse()) {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span class="dot" style="background:${trackColor(e.track)}"></span>
-      <span>${esc(E.trackName(g.config, e.track))}</span>
-      <span class="muted">${E.REASON_LABEL[e.reason] ?? e.reason}</span>
-      ${e.points > 0 ? `<span class="pts">+${e.points}</span>` : ""}`;
-    list.appendChild(li);
-  }
+function syncCustomButton() {
+  const btn = $("custom-peg");
+  btn.textContent = customPoints > 0 ? `Peg +${customPoints}` : "Peg";
+  btn.disabled = customPoints === 0;
+  btn.style.background = customPoints > 0 ? trackColor(selectedTrack) : "";
+  btn.style.borderColor = trackColor(selectedTrack);
 }
 
 function renderGameOver(g, tc) {
@@ -262,7 +327,9 @@ function renderGameOver(g, tc) {
       return null;
     })
     .filter(Boolean);
-  const matchOngoing = session.match && E.matchWinner(withResult(session.match, g), tc) === null;
+  const matchOngoing =
+    session.match &&
+    E.matchWinner({ ...session.match, results: [...session.match.results, E.gameResult(g)] }, tc) === null;
 
   const box = $("game-over");
   box.innerHTML = `
@@ -274,12 +341,9 @@ function renderGameOver(g, tc) {
         ${matchOngoing ? "Next game" : "Finish"}
       </button>
     </div>`;
-  $("go-undo").addEventListener("click", () => { E.undo(session.game); persistSession(); renderGame(); });
+  announce(`${name} wins ${scoreline}`);
+  $("go-undo").addEventListener("click", () => { E.undo(session.game); persistSession(); renderLiveGame(); });
   $("go-next").addEventListener("click", () => concludeGame(matchOngoing));
-}
-
-function withResult(match, game) {
-  return { ...match, results: [...match.results, E.gameResult(game)] };
 }
 
 function concludeGame(startNext) {
@@ -295,51 +359,136 @@ function concludeGame(startNext) {
     const loserSeats = seats.filter((s) => E.trackForSeat(config.mode, s) !== winner);
     config.startingDealerSeat = loserSeats[0] ?? 0; // loser deals first next game
     session.game = E.newGame(config);
+    animState = null;
     persistSession();
-    renderGame();
+    renderLiveGame();
   } else {
     session = null;
     persistSession();
-    navStack = ["home"];
-    render();
+    renderGameTab();
   }
 }
 
 function doPeg(track, points, reason, breakdown = null) {
   try {
+    const before = E.trackScore(session.game, track);
     E.peg(session.game, track, points, reason, breakdown);
     persistSession();
     if (navigator.vibrate) navigator.vibrate(8);
-    renderGame();
+    startPegAnimation(track, before, E.trackScore(session.game, track));
+    const name = E.trackName(session.game.config, track);
+    const label = E.REASON_LABEL[reason] ?? reason;
+    showToast(`+${points} ${label} — ${name}`);
+    announce(`${name} pegs ${points} for ${label}, now ${E.trackScore(session.game, track)}`);
+    renderLiveGame();
+    return true;
   } catch {
-    /* game over — board already showing the panel */
+    return false; // game already over
   }
 }
 
-$("custom-minus").addEventListener("click", () => { customPoints = Math.max(1, customPoints - 1); renderGame(); });
-$("custom-plus").addEventListener("click", () => { customPoints = Math.min(29, customPoints + 1); renderGame(); });
-$("custom-peg").addEventListener("click", () => doPeg(selectedTrack, customPoints, "manual"));
-$("btn-undo").addEventListener("click", () => { E.undo(session.game); persistSession(); renderGame(); });
-$("btn-nexthand").addEventListener("click", () => {
-  try { E.completeHand(session.game); persistSession(); renderGame(); } catch { /* over */ }
+$("custom-minus").addEventListener("click", () => {
+  customPoints = Math.max(0, customPoints - 1);
+  syncCustomButton();
 });
-$("btn-abandon").addEventListener("click", () => {
-  if (confirm("Abandon this game? It won't be saved.")) {
-    session = null;
-    persistSession();
-    navStack = ["home"];
-    render();
+$("custom-plus").addEventListener("click", () => {
+  customPoints = Math.min(29, customPoints + 1);
+  syncCustomButton();
+});
+$("custom-peg").addEventListener("click", () => {
+  if (customPoints > 0 && doPeg(selectedTrack, customPoints, "manual")) {
+    customPoints = 0; // counter zeroes out after the peg advances
+    syncCustomButton();
   }
+});
+$("btn-undo").addEventListener("click", () => {
+  E.undo(session.game);
+  persistSession();
+  renderLiveGame();
+});
+$("btn-count").addEventListener("click", () => switchTab("calc"));
+$("btn-nexthand").addEventListener("click", () => {
+  try {
+    E.completeHand(session.game);
+    persistSession();
+    const dealer = session.game.config.playerNames[E.dealerSeat(session.game)];
+    showToast(`Next hand — ${dealer} deals`, false);
+    renderLiveGame();
+  } catch { /* over */ }
+});
+
+// Events + end-game modals
+$("btn-events").addEventListener("click", () => {
+  const g = session.game;
+  const list = $("events-list");
+  list.innerHTML = "";
+  for (const e of [...g.events].reverse()) {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span class="dot" style="background:${trackColor(e.track)}"></span>
+      <span>${esc(E.trackName(g.config, e.track))}</span>
+      <span class="muted">${E.REASON_LABEL[e.reason] ?? e.reason}</span>
+      ${e.points > 0 ? `<span class="pts">+${e.points}</span>` : ""}`;
+    list.appendChild(li);
+  }
+  if (g.events.length === 0) list.innerHTML = `<li class="muted">Nothing pegged yet.</li>`;
+  $("events-modal").hidden = false;
+});
+$("events-close").addEventListener("click", () => { $("events-modal").hidden = true; });
+$("btn-newgame").addEventListener("click", () => { $("newgame-modal").hidden = false; });
+$("nm-cancel").addEventListener("click", () => { $("newgame-modal").hidden = true; });
+$("nm-abandon").addEventListener("click", () => {
+  $("newgame-modal").hidden = true;
+  session = null;
+  persistSession();
+  renderGameTab();
 });
 
 // ---------------------------------------------------------------- The board
 
+let animState = null; // { track, from, to, start }
+let drawQueued = false;
+
+function scheduleBoardDraw(g) {
+  if (drawQueued) return;
+  drawQueued = true;
+  requestAnimationFrame(() => {
+    drawQueued = false;
+    drawBoard(g);
+  });
+}
+
+function startPegAnimation(track, fromScore, toScore) {
+  animState = { track, from: fromScore, to: toScore, start: performance.now() };
+}
+
+function animatedFront(g, t) {
+  const target = E.pegPositions(g, t).front;
+  if (!animState || animState.track !== t) return target;
+  const elapsed = performance.now() - animState.start;
+  const duration = 450;
+  if (elapsed >= duration) { animState = null; return target; }
+  const k = 1 - Math.pow(1 - elapsed / duration, 3); // ease-out cubic
+  return animState.from + (animState.to - animState.from) * k;
+}
+
 function drawBoard(g) {
   const canvas = $("board");
+  const wrap = $("board-wrap");
+  if (!canvas.isConnected || wrap.clientWidth === 0) return;
   const layout = E.boardLayout(E.MODES[g.config.mode].trackCount, 6, g.config.targetScore);
-  const cssWidth = canvas.parentElement.clientWidth - 0;
-  const cssHeight = Math.round(cssWidth / layout.aspectRatio);
+
+  // Fit inside the flexible wrapper: never force the page to scroll.
+  const availW = wrap.clientWidth;
+  const availH = wrap.clientHeight;
+  let cssWidth = availW;
+  let cssHeight = Math.round(cssWidth / layout.aspectRatio);
+  if (cssHeight > availH) {
+    cssHeight = availH;
+    cssWidth = Math.round(cssHeight * layout.aspectRatio);
+  }
   const dpr = window.devicePixelRatio || 1;
+  canvas.style.width = cssWidth + "px";
   canvas.style.height = cssHeight + "px";
   canvas.width = Math.round(cssWidth * dpr);
   canvas.height = Math.round(cssHeight * dpr);
@@ -430,20 +579,29 @@ function drawBoard(g) {
     ctx.fillText(label, ...P({ x: c.x + (r + 0.55) * n.x, y: c.y + (r + 0.55) * n.y }));
   }
 
-  // Start/finish
+  // Start/finish + lane initials (so lanes aren't identified by color alone)
   ctx.fillStyle = mutedColor;
   ctx.font = `600 ${Math.max(7, 0.42 * scale)}px -apple-system, sans-serif`;
   const start = layout.centerPosition(0);
   const finish = layout.centerPosition(layout.targetScore);
-  ctx.fillText("START", ...P({ x: start.x, y: start.y + 0.9 }));
-  ctx.fillText("FINISH", ...P({ x: finish.x, y: finish.y + 0.9 }));
+  ctx.fillText("START", ...P({ x: start.x, y: start.y + 1.3 }));
+  ctx.fillText("FINISH", ...P({ x: finish.x, y: finish.y + 1.3 }));
+  ctx.font = `800 ${Math.max(8, 0.55 * scale)}px -apple-system, sans-serif`;
+  for (let t = 0; t < tc; t++) {
+    const p0 = layout.position(0, t);
+    ctx.fillStyle = trackColor(t);
+    ctx.fillText(E.trackName(g.config, t).charAt(0).toUpperCase(), ...P({ x: p0.x, y: p0.y + 0.62 }));
+  }
 
-  // Pegs
+  // Pegs (front peg position may be mid-animation)
+  let animating = false;
   for (let t = 0; t < tc; t++) {
     const pegs = E.pegPositions(g, t);
-    for (const [hole, front] of [[pegs.back, false], [pegs.front, true]]) {
-      const [x, y] = P(layout.position(hole, t));
-      const rad = (front ? 0.36 : 0.28) * layout.laneGap * scale;
+    const front = animatedFront(g, t);
+    if (front !== pegs.front) animating = true;
+    for (const [pos, isFront] of [[pegs.back, false], [front, true]]) {
+      const [x, y] = P(layout.position(pos, t));
+      const rad = (isFront ? 0.36 : 0.28) * layout.laneGap * scale;
       ctx.beginPath();
       ctx.arc(x, y, rad, 0, Math.PI * 2);
       ctx.fillStyle = trackColor(t);
@@ -453,15 +611,24 @@ function drawBoard(g) {
       ctx.stroke();
     }
   }
+  if (animating) scheduleBoardDraw(g);
+
+  // Screen-reader description of the whole board
+  const summary = [...Array(tc).keys()]
+    .map((t) => `${E.trackName(g.config, t)} at ${E.trackScore(g, t)} of ${g.config.targetScore}`)
+    .join(", ");
+  canvas.setAttribute("aria-label", `Cribbage board. ${summary}.`);
 }
 
 window.addEventListener("resize", () => {
-  if (navStack[navStack.length - 1] === "game" && session) drawBoard(session.game);
+  if (currentTab === "game" && session) scheduleBoardDraw(session.game);
 });
 
 // ------------------------------------------------------------------- Calc
 
 let calcSelection = [];
+let claimedPoints = null;
+let calcPegBusy = false;
 
 function buildCardGrid() {
   const grid = $("card-grid");
@@ -472,6 +639,7 @@ function buildCardGrid() {
       b.className = E.isRed(suit) ? "red" : "";
       b.dataset.rank = rank;
       b.dataset.suit = suit;
+      b.setAttribute("aria-label", `${E.RANK_SYMBOL[rank]} of ${suit}`);
       b.innerHTML = `<span class="r">${E.RANK_SYMBOL[rank]}</span>${E.SUIT_SYMBOL[suit]}`;
       b.addEventListener("click", () => toggleCard(rank, suit));
       grid.appendChild(b);
@@ -484,14 +652,14 @@ function toggleCard(rank, suit) {
   const idx = calcSelection.findIndex((c) => c.rank === rank && c.suit === suit);
   if (idx >= 0) calcSelection.splice(idx, 1);
   else if (calcSelection.length < 5) calcSelection.push(E.card(rank, suit));
+  claimedPoints = null;
   renderCalc();
 }
 
 $("calc-crib").addEventListener("change", renderCalc);
-$("calc-clear").addEventListener("click", () => { calcSelection = []; renderCalc(); });
+$("calc-clear").addEventListener("click", () => { calcSelection = []; claimedPoints = null; renderCalc(); });
 
 function renderCalc() {
-  // Slots
   const slots = $("calc-slots");
   slots.innerHTML = "";
   for (let i = 0; i < 5; i++) {
@@ -501,7 +669,6 @@ function renderCalc() {
     div.textContent = c ? E.cardName(c) : "—";
     slots.appendChild(div);
   }
-  // Grid selection state
   for (const b of $("card-grid").children) {
     const idx = calcSelection.findIndex(
       (c) => c.rank === Number(b.dataset.rank) && c.suit === b.dataset.suit
@@ -538,41 +705,48 @@ function renderCalc() {
     html += `<div class="muted" style="margin-top:8px">ℹ️ Starter is a jack — dealer pegs 2 for heels at the cut.</div>`;
   }
   result.innerHTML = html;
+  announce(`Hand counts ${breakdown.total}`);
 
   renderCalcPeg(breakdown, isCrib);
 }
 
-let claimedPoints = null;
-
 function renderCalcPeg(breakdown, isCrib) {
   const pegBox = $("calc-peg");
   const g = session?.game;
-  if (calcPegTarget === null || !g || E.isOver(g)) {
+  if (!g || E.isOver(g)) {
     pegBox.hidden = true;
     return;
   }
   pegBox.hidden = false;
-  const track = calcPegTarget;
+  const tc = E.MODES[g.config.mode].trackCount;
+  if (selectedTrack >= tc) selectedTrack = 0;
+  const track = selectedTrack;
   const name = E.trackName(g.config, track);
   const reason = isCrib ? "cribCount" : "handCount";
   const claimed = claimedPoints ?? breakdown.total;
 
-  let html = `<div class="card-title">Peg it</div>
+  let html = `<div class="card-title">Peg it</div><div id="calc-track-chips">`;
+  for (let t = 0; t < tc; t++) {
+    const sel = t === track;
+    html += `<button class="track-chip" data-chip="${t}" aria-pressed="${sel}"
+      style="border-color:${sel ? trackColor(t) : "var(--line)"};color:${trackColor(t)}">
+      ${esc(E.trackName(g.config, t))}</button>`;
+  }
+  html += `</div>
     <button id="peg-full" class="primary" ${breakdown.total === 0 ? "disabled" : ""}>
       Peg ${breakdown.total} for ${esc(name)}</button>`;
 
   if (g.config.mugginsEnabled && breakdown.total > 0) {
     html += `<div id="claimed-row">
-        <button class="stepper" id="claim-minus">−</button>
+        <button class="stepper" id="claim-minus" aria-label="Decrease claimed points">−</button>
         <span class="claimed-val">Claimed: ${claimed}</span>
-        <button class="stepper" id="claim-plus">+</button>
+        <button class="stepper" id="claim-plus" aria-label="Increase claimed points">+</button>
       </div>`;
     if (claimed < breakdown.total) {
       const missed = breakdown.total - claimed;
       if (claimed > 0) {
         html += `<button id="peg-claimed">Peg claimed ${claimed} for ${esc(name)}</button>`;
       }
-      const tc = E.MODES[g.config.mode].trackCount;
       for (let other = 0; other < tc; other++) {
         if (other === track) continue;
         html += `<button class="muggins-btn" data-mug="${other}">
@@ -582,10 +756,16 @@ function renderCalcPeg(breakdown, isCrib) {
   }
   pegBox.innerHTML = html;
 
-  $("peg-full").addEventListener("click", () => {
+  pegBox.querySelectorAll("[data-chip]").forEach((b) =>
+    b.addEventListener("click", () => {
+      selectedTrack = Number(b.dataset.chip);
+      renderCalc();
+    })
+  );
+  $("peg-full").addEventListener("click", () => guardedCalcPeg(() => {
     doPeg(track, breakdown.total, reason, breakdown);
     finishCalcPeg();
-  });
+  }));
   $("claim-minus")?.addEventListener("click", () => {
     claimedPoints = Math.max(0, (claimedPoints ?? breakdown.total) - 1);
     renderCalc();
@@ -594,25 +774,33 @@ function renderCalcPeg(breakdown, isCrib) {
     claimedPoints = Math.min(breakdown.total, (claimedPoints ?? breakdown.total) + 1);
     renderCalc();
   });
-  $("peg-claimed")?.addEventListener("click", () => {
+  $("peg-claimed")?.addEventListener("click", () => guardedCalcPeg(() => {
     doPeg(track, claimed, reason, breakdown);
     finishCalcPeg();
-  });
+  }));
   pegBox.querySelectorAll("[data-mug]").forEach((b) =>
-    b.addEventListener("click", () => {
+    b.addEventListener("click", () => guardedCalcPeg(() => {
       const missed = breakdown.total - claimed;
       if (claimed > 0) doPeg(track, claimed, reason, breakdown);
       doPeg(Number(b.dataset.mug), missed, "muggins");
       finishCalcPeg();
-    })
+    }))
   );
+}
+
+/** One calc peg per render — blocks accidental double-taps. */
+function guardedCalcPeg(action) {
+  if (calcPegBusy) return;
+  calcPegBusy = true;
+  action();
+  setTimeout(() => { calcPegBusy = false; }, 400);
 }
 
 function finishCalcPeg() {
   calcSelection = [];
   claimedPoints = null;
   $("calc-crib").checked = false;
-  back();
+  switchTab("game");
 }
 
 // ----------------------------------------------------------------- History
@@ -675,17 +863,23 @@ function renderHistory() {
 function renderSettings() {
   $("set-muggins").checked = settings.muggins;
   $("set-skunkx").checked = settings.skunkx;
+  $("set-palette").value = settings.palette;
   $("version-line").textContent = `Version ${VERSION}`;
 }
 $("set-muggins").addEventListener("change", (e) => {
   settings.muggins = e.target.checked;
-  store.save("settings", settings);
+  persistSettings();
   $("ng-muggins").checked = settings.muggins;
 });
 $("set-skunkx").addEventListener("change", (e) => {
   settings.skunkx = e.target.checked;
-  store.save("settings", settings);
+  persistSettings();
   $("ng-skunkx").checked = settings.skunkx;
+});
+$("set-palette").addEventListener("change", (e) => {
+  settings.palette = e.target.value;
+  persistSettings();
+  applyPalette();
 });
 
 // ------------------------------------------------------------------- Util
@@ -698,10 +892,11 @@ function esc(s) {
 
 // ------------------------------------------------------------------- Boot
 
+applyPalette();
 $("ng-muggins").checked = settings.muggins;
 $("ng-skunkx").checked = settings.skunkx;
 syncNewGameForm();
-render();
+switchTab("game");
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});

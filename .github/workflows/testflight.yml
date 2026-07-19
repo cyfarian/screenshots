@@ -28,8 +28,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show Xcode version
-        run: xcodebuild -version
+      - name: Select Xcode
+        # Pinned so a runner-image update can't silently change the build
+        # toolchain. If the pinned version disappears from the image, the
+        # default Xcode is used and logged.
+        run: |
+          PINNED="/Applications/Xcode_16.4.app"
+          if [ -d "$PINNED" ]; then
+            sudo xcode-select -s "$PINNED"
+          else
+            echo "::warning::$PINNED not on this runner image; using default"
+          fi
+          xcodebuild -version
 
       - name: Install XcodeGen
         run: brew install xcodegen

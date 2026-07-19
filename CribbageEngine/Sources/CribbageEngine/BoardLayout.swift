@@ -68,6 +68,13 @@ public struct BoardLayout: Sendable {
         return lanePoint(atDistance: Double(hole), track: track)
     }
 
+    /// Position at a fractional distance along the path — lets a peg animate
+    /// smoothly between holes. `distance` is clamped to 0...targetScore.
+    public func position(atDistance distance: Double, track: Int) -> (x: Double, y: Double) {
+        precondition(track >= 0 && track < trackCount)
+        return lanePoint(atDistance: min(max(distance, 0), Double(targetScore)), track: track)
+    }
+
     /// Centerline position at a hole (midway between the lanes), for ticks
     /// and labels that span the whole track.
     public func centerPosition(hole: Int) -> (x: Double, y: Double) {
