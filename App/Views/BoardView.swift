@@ -9,8 +9,9 @@ enum TrackStyle {
     }
 }
 
-/// The pegging board: serpentine rows of holes with two pegs per track,
-/// plus skunk (S) and double-skunk (SS) markers.
+/// A traditional serpentine cribbage board: parallel colored lanes winding
+/// through U-turns, hole dots grouped in fives, milestone numbers, skunk
+/// lines, and two pegs per track. All geometry comes from `BoardLayout`.
 struct BoardView: View {
     let game: Game
 
@@ -20,86 +21,170 @@ struct BoardView: View {
 
     var body: some View {
         Canvas { context, size in
-            drawHoles(context: context, size: size)
-            drawSkunkMarkers(context: context, size: size)
-            drawPegs(context: context, size: size)
+            let board = layout.boardSize
+            let scale = min(size.width / board.width, size.height / board.height)
+            let offsetX = (size.width - board.width * scale) / 2
+            let offsetY = (size.height - board.height * scale) / 2
+            let point: ((x: Double, y: Double)) -> CGPoint = { p in
+                CGPoint(x: offsetX + p.x * scale, y: offsetY + p.y * scale)
+            }
+
+            drawRibbons(context: context, scale: scale, point: point)
+            drawTicksAndLabels(context: context, scale: scale, point: point)
+            drawHoles(context: context, scale: scale, point: point)
+            drawSkunkLines(context: context, scale: scale, point: point)
+            drawStartFinish(context: context, scale: scale, point: point)
+            drawPegs(context: context, scale: scale, point: point)
         }
+        .aspectRatio(layout.aspectRatio, contentMode: .fit)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
-        .aspectRatio(aspectRatio, contentMode: .fit)
     }
 
-    private var aspectRatio: CGFloat {
-        // Wider than tall; more lanes need more height.
-        let lanes = CGFloat(layout.rowCount * layout.trackCount)
-        return max(1.0, 34.0 / lanes)
-    }
+    // MARK: - Layers
 
-    private func point(hole: Int, track: Int, size: CGSize) -> CGPoint {
-        let p = layout.position(hole: hole, track: track)
-        return CGPoint(x: p.x * size.width, y: p.y * size.height)
-    }
-
-    private func drawHoles(context: GraphicsContext, size: CGSize) {
+    private func drawRibbons(
+        context: GraphicsContext, scale: CGFloat,
+        point: ((x: Double, y: Double)) -> CGPoint
+    ) {
         for track in 0..<layout.trackCount {
-            let color = TrackStyle.color(track)
-            for hole in 0...layout.targetScore {
-                let center = point(hole: hole, track: track, size: size)
-                // Emphasize every 5th hole the way boards group holes in fives.
-                let radius: CGFloat = hole > 0 && hole % 5 == 0 ? 2.4 : 1.7
-                let rect = CGRect(
-                    x: center.x - radius, y: center.y - radius,
-                    width: radius * 2, height: radius * 2
+            let samples = layout.lanePoints(track: track)
+            var path = Path()
+            path.move(to: point(samples[0]))
+            for sample in samples.dropFirst() {
+                path.addLine(to: point(sample))
+            }
+            context.stroke(
+                path,
+                with: .color(TrackStyle.color(track).opacity(0.18)),
+                style: StrokeStyle(
+                    lineWidth: 0.82 * layout.laneGap * scale,
+                    lineCap: .round, lineJoin: .round
                 )
-                context.fill(
-                    Path(ellipseIn: rect),
-                    with: .color(color.opacity(hole == 0 ? 0.9 : 0.25))
+            )
+        }
+    }
+
+    private func drawTicksAndLabels(
+        context: GraphicsContext, scale: CGFloat,
+        point: ((x: Double, y: Double)) -> CGPoint
+    ) {
+        let skunkHoles: Set<Int> = [
+            game.config.skunkThreshold - 1, game.config.doubleSkunkThreshold - 1,
+        ]
+        let halfWidth = Double(layout.trackCount - 1) * layout.laneGap / 2
+
+        for hole in stride(from: 5, to: layout.targetScore, by: 5) {
+            let center = layout.centerPosition(hole: hole)
+            let normal = layout.perpendicular(atHole: hole)
+
+            if !skunkHoles.contains(hole) {
+                let reach = halfWidth + 0.55
+                var tick = Path()
+                tick.move(to: point((center.x + reach * normal.x, center.y + reach * normal.y)))
+                tick.addLine(to: point((center.x - reach * normal.x, center.y - reach * normal.y)))
+                context.stroke(tick, with: .color(.secondary.opacity(0.5)), lineWidth: 1)
+            }
+
+            if hole % 10 == 0 {
+                let reach = halfWidth + 1.05
+                let at = point((center.x + reach * normal.x, center.y + reach * normal.y))
+                context.draw(
+                    Text("\(hole)")
+                        .font(.system(size: max(7, 0.5 * scale), weight: .medium))
+                        .foregroundStyle(.secondary),
+                    at: at
                 )
             }
         }
     }
 
-    private func drawSkunkMarkers(context: GraphicsContext, size: CGSize) {
+    private func drawHoles(
+        context: GraphicsContext, scale: CGFloat,
+        point: ((x: Double, y: Double)) -> CGPoint
+    ) {
+        for track in 0..<layout.trackCount {
+            for hole in 0...layout.targetScore {
+                let center = point(layout.position(hole: hole, track: track))
+                let radius = (hole > 0 && hole % 5 == 0 ? 0.16 : 0.12) * layout.laneGap * scale
+                let rect = CGRect(
+                    x: center.x - radius, y: center.y - radius,
+                    width: radius * 2, height: radius * 2
+                )
+                context.fill(Path(ellipseIn: rect), with: .color(.primary.opacity(0.45)))
+            }
+        }
+    }
+
+    private func drawSkunkLines(
+        context: GraphicsContext, scale: CGFloat,
+        point: ((x: Double, y: Double)) -> CGPoint
+    ) {
+        let halfWidth = Double(layout.trackCount - 1) * layout.laneGap / 2
         let markers: [(hole: Int, label: String)] = [
             (game.config.skunkThreshold - 1, "S"),
             (game.config.doubleSkunkThreshold - 1, "SS"),
         ]
-        for marker in markers {
-            guard marker.hole > 0 && marker.hole < game.config.targetScore else { continue }
-            let top = point(hole: marker.hole, track: 0, size: size)
-            let bottom = point(hole: marker.hole, track: layout.trackCount - 1, size: size)
+        for marker in markers where marker.hole > 0 && marker.hole < layout.targetScore {
+            let center = layout.centerPosition(hole: marker.hole)
+            let normal = layout.perpendicular(atHole: marker.hole)
+            let reach = halfWidth + 0.7
             var line = Path()
-            line.move(to: CGPoint(x: top.x, y: top.y - 6))
-            line.addLine(to: CGPoint(x: bottom.x, y: bottom.y + 6))
-            context.stroke(line, with: .color(.orange.opacity(0.8)), lineWidth: 1.5)
+            line.move(to: point((center.x + reach * normal.x, center.y + reach * normal.y)))
+            line.addLine(to: point((center.x - reach * normal.x, center.y - reach * normal.y)))
+            context.stroke(line, with: .color(.orange), lineWidth: max(2, 0.12 * scale))
+            let labelAt = point((
+                center.x + (reach + 0.55) * normal.x,
+                center.y + (reach + 0.55) * normal.y
+            ))
             context.draw(
-                Text(marker.label).font(.system(size: 8, weight: .bold)).foregroundStyle(.orange),
-                at: CGPoint(x: top.x, y: top.y - 12)
+                Text(marker.label)
+                    .font(.system(size: max(7, 0.45 * scale), weight: .bold))
+                    .foregroundStyle(.orange),
+                at: labelAt
             )
         }
     }
 
-    private func drawPegs(context: GraphicsContext, size: CGSize) {
+    private func drawStartFinish(
+        context: GraphicsContext, scale: CGFloat,
+        point: ((x: Double, y: Double)) -> CGPoint
+    ) {
+        let start = layout.centerPosition(hole: 0)
+        let finish = layout.centerPosition(hole: layout.targetScore)
+        let font = Font.system(size: max(7, 0.42 * scale), weight: .semibold)
+        context.draw(
+            Text("START").font(font).foregroundStyle(.secondary),
+            at: point((start.x, start.y + 0.9))
+        )
+        context.draw(
+            Text("FINISH").font(font).foregroundStyle(.secondary),
+            at: point((finish.x, finish.y + 0.9))
+        )
+    }
+
+    private func drawPegs(
+        context: GraphicsContext, scale: CGFloat,
+        point: ((x: Double, y: Double)) -> CGPoint
+    ) {
         for track in 0..<layout.trackCount {
             let color = TrackStyle.color(track)
             let pegs = game.pegPositions(ofTrack: track)
             for (position, isFront) in [(pegs.back, false), (pegs.front, true)] {
-                let center = point(hole: position, track: track, size: size)
-                let radius: CGFloat = isFront ? 5 : 4
+                let center = point(layout.position(hole: position, track: track))
+                let radius = (isFront ? 0.36 : 0.28) * layout.laneGap * scale
                 let rect = CGRect(
                     x: center.x - radius, y: center.y - radius,
                     width: radius * 2, height: radius * 2
                 )
                 context.fill(Path(ellipseIn: rect), with: .color(color))
-                if isFront {
-                    context.stroke(
-                        Path(ellipseIn: rect.insetBy(dx: -1.5, dy: -1.5)),
-                        with: .color(color.opacity(0.5)),
-                        lineWidth: 1.5
-                    )
-                }
+                context.stroke(
+                    Path(ellipseIn: rect),
+                    with: .color(.white.opacity(0.9)),
+                    lineWidth: max(1, 0.06 * scale)
+                )
             }
         }
     }
